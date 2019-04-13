@@ -3,8 +3,9 @@ import Router from 'vue-router'
 import Home from './views/Home.vue'
 import Dashboard from './views/Dashboard.vue'
 import NewContract from './views/NewContract.vue'
-import ManageIdentity from './views/ManageIdentity.vue'
-import SearchContracts from './views/SearchContracts.vue'
+import ManageDrafts from './views/ManageDrafts.vue'
+import ManageContracts from './views/ManageContracts.vue'
+import JoinContract from './views/JoinContract.vue'
 
 Vue.use(Router)
 
@@ -28,14 +29,19 @@ export default new Router({
       component: NewContract
     },
     {
-      path: '/identity',
-      name: 'identity',
-      component: ManageIdentity
+      path: '/join/:id',
+      name: 'contracts-draft',
+      component: JoinContract
     },
     {
-      path: '/search-contracts',
-      name: 'contracts-search',
-      component: SearchContracts
+      path: '/drafts',
+      name: 'drafts',
+      component: ManageDrafts
+    },
+    {
+      path: '/contracts',
+      name: 'contracts',
+      component: ManageContracts
     }
   ]
 })

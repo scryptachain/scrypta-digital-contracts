@@ -8,13 +8,13 @@
             <b-collapse id="nav-collapse" is-nav>
             <b-navbar-nav>
                 <b-nav-item href="#"><router-link to="/new-contract">New contract</router-link></b-nav-item>
-                <b-nav-item href="#"><router-link to="/identity">Manage Identity</router-link></b-nav-item>
-                <b-nav-item href="#"><router-link to="/search-contracts">Search contract</router-link></b-nav-item>
+                <b-nav-item href="#"><router-link to="/drafts">Manage drafts</router-link></b-nav-item>
+                <b-nav-item href="#"><router-link to="/contracts">Manage contracts</router-link></b-nav-item>
             </b-navbar-nav>
 
             <!-- Right aligned nav items -->
             <b-navbar-nav class="ml-auto">
-                <b-nav-item href="#" v-on:click="logout">Sign out</b-nav-item>
+                <b-nav-item href="#" v-on:click="logout">Logout</b-nav-item>
             </b-navbar-nav>
             </b-collapse>
         </b-navbar>

@@ -5,28 +5,34 @@
     <div class="container main-container">
       <div class="row">
         <div class="col-sm-12">
-            <h3>Create a new contract</h3>
+            <div v-if="!joinUrl">
+                <h3>Create a new draft</h3>
+                <p>
+                    In order to create a new contract you need to create a new draft contract.<br>
+                    This contract is stored off-chain and other parts have to enter.<br><br>
+                    <b-button variant="success" v-if="!isCreating" v-on:click="createDraft">CREATE DRAFT</b-button>
+                    <span v-if="isCreating">Creating draft...</span>
+                </p>
+            </div>
+            <div v-if="joinUrl">
+                <h3>Create on-chain contract</h3>
+                Your shareable link is:<br>
+                {{ joinUrl }}
+                <br><br>
+                Please wait for other parts and then create your onchain contract.
+            </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<style>
-  #app{
-    text-align: center;
-    font-family: 'karmillaregular';
-  }
-  .navbar-dark .navbar-nav .nav-link{opacity:0.9!important; color:#fff!important}
-  .navbar-dark .navbar-nav .nav-link:hover{opacity: 0.7!important;}
-</style>
-
 <script>
 export default {
   name: 'contracts-new',
   mounted : function(){
-    this.checkIdaNodes()
-    this.checkUser()
+      this.checkIdaNodes()
+      this.checkUser()
   },
   methods: {
       checkUser() {
@@ -36,23 +42,46 @@ export default {
         }
       },
       checkIdaNodes(){
-        var checknodes = this.scrypta.returnNodes()
+        const checknodes = this.scrypta.returnNodes()
         const app = this
         for(var i = 0; i < checknodes.length; i++){
           this.axios.get('https://' + checknodes[i] + '/check')
           .then(function (response) {
-             app.nodes.push(response.data.name)
-             if(i == checknodes.length){
+             app.nodes.push(response.data.name);
+             if(i === checknodes.length){
                app.connectToNode()
              }
           });
         }
       },
       connectToNode(){
-        var app = this
-        if(app.connected == ''){
+        const app = this
+        if(app.connected === ''){
           app.connected = app.nodes[Math.floor(Math.random()*app.nodes.length)];
+          app.connected = 'idanode01.scryptachain.org'
         }
+      },
+      createDraft(){
+          const app = this
+          app.isCreating = true
+          app.axios.post('https://' + app.connected + '/storage/write',
+              {
+                  dapp: app.scrypta.PubAddress,
+                  collection: 'CONTRACT',
+                  data: {
+                      "owner": app.public_address,
+                      "join": [
+                          app.public_address
+                      ]
+                  }
+              })
+              .then(function (response) {
+                  app.isCreating = false
+                  app.joinUrl = window.location.protocol + '//' + window.location.host + '/join/' + response.data.data
+              })
+              .catch(function () {
+                  alert("Seems there's a problem, please retry or change node!")
+              })
       }
   },
   data () {
@@ -61,10 +90,10 @@ export default {
       axios: window.axios,
       nodes: [],
       connected: '',
-      login: false,
+      isCreating: false,
       unlockPwd: "",
       public_address: '',
-      encrypted_wallet: ''
+      joinUrl: ''
     }
   }
 }

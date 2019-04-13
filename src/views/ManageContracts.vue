@@ -5,10 +5,7 @@
     <div class="container main-container">
       <div class="row">
         <div class="col-sm-12">
-          <img src="../assets/file-plus.svg" width="200"><br><br>
-          You haven't contracts to see right now.<br>
-          Starts by finding another user and create a new contract!<br><br>
-          <router-link to="/new-contract"><b-button variant="success">Create new contract</b-button></router-link>
+            <h3>Your active contracts</h3>
         </div>
       </div>
     </div>
@@ -17,7 +14,7 @@
 
 <script>
 export default {
-  name: 'home',
+  name: 'search-contracts',
   mounted : function(){
     this.checkIdaNodes()
     this.checkUser()

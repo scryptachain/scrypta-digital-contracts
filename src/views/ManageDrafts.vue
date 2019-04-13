@@ -5,25 +5,23 @@
     <div class="container main-container">
       <div class="row">
         <div class="col-sm-12">
-            <h3>Manage your Identity</h3>
+            <h3>Manage your drafts</h3>
+            <div v-if="!isLoading">
+              {{ drafts }}
+            </div>
+            <div v-if="isLoading">
+              Fetching your drafts..
+            </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<style>
-  #app{
-    text-align: center;
-    font-family: 'karmillaregular';
-  }
-  .navbar-dark .navbar-nav .nav-link{opacity:0.9!important; color:#fff!important}
-  .navbar-dark .navbar-nav .nav-link:hover{opacity: 0.7!important;}
-</style>
-
 <script>
+import { setTimeout } from 'timers';
 export default {
-  name: 'manage-identity',
+  name: 'manage-draft',
   mounted : function(){
     this.checkIdaNodes()
     this.checkUser()
@@ -52,7 +50,24 @@ export default {
         var app = this
         if(app.connected == ''){
           app.connected = app.nodes[Math.floor(Math.random()*app.nodes.length)];
+          app.getDrafts()
         }
+      },
+      getDrafts(){
+          const app = this
+          app.isLoading = true
+          app.axios.post('https://' + app.connected + '/storage/read',
+              {
+                  dapp: app.scrypta.PubAddress,
+                  collection: 'CONTRACT'
+              })
+              .then(function (response) {
+                app.isLoading = false
+                app.drafts = response.data.data
+              })
+              .catch(function () {
+                  alert("Seems there's a problem, please retry or change node!")
+              })
       }
   },
   data () {
@@ -64,7 +79,9 @@ export default {
       login: false,
       unlockPwd: "",
       public_address: '',
-      encrypted_wallet: ''
+      encrypted_wallet: '',
+      drafts: '',
+      isLoading: true
     }
   }
 }

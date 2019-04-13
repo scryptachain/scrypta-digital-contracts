@@ -5,25 +5,16 @@
     <div class="container main-container">
       <div class="row">
         <div class="col-sm-12">
-            <h3>Search contracts</h3>
+            <h3>Join contract</h3>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<style>
-  #app{
-    text-align: center;
-    font-family: 'karmillaregular';
-  }
-  .navbar-dark .navbar-nav .nav-link{opacity:0.9!important; color:#fff!important}
-  .navbar-dark .navbar-nav .nav-link:hover{opacity: 0.7!important;}
-</style>
-
 <script>
 export default {
-  name: 'search-contracts',
+  name: 'contracts-new',
   mounted : function(){
     this.checkIdaNodes()
     this.checkUser()
