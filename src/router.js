@@ -5,6 +5,8 @@ import Dashboard from './views/Dashboard.vue'
 import NewContract from './views/NewContract.vue'
 import ManageDrafts from './views/ManageDrafts.vue'
 import ManageContracts from './views/ManageContracts.vue'
+import ManageContract from './views/ManageContract.vue'
+import ManageDraft from './views/ManageDraft.vue'
 import JoinContract from './views/JoinContract.vue'
 
 Vue.use(Router)
@@ -32,6 +34,16 @@ export default new Router({
       path: '/join/:id',
       name: 'contracts-draft',
       component: JoinContract
+    },
+    {
+      path: '/manage/:id',
+      name: 'contracts-manage',
+      component: ManageContract
+    },
+    {
+      path: '/draft/:id',
+      name: 'draft-manage',
+      component: ManageDraft
     },
     {
       path: '/drafts',

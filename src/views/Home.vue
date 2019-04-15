@@ -98,6 +98,7 @@ export default {
         var app = this
         if(app.connected == ''){
           app.connected = app.nodes[Math.floor(Math.random()*app.nodes.length)];
+          app.connected = "idanode01.scryptachain.org" //FIXED NODE FOR BETTER EXPERIENCE
         }
       },
       showLogin(){

@@ -20,6 +20,10 @@
                 {{ joinUrl }}
                 <br><br>
                 Please wait for other parts and then create your onchain contract.
+                <br><br>
+                <a :href="manageUrl">
+                  <b-button variant="success">MANAGE DRAFT</b-button>
+                </a>
             </div>
         </div>
       </div>
@@ -58,7 +62,7 @@ export default {
         const app = this
         if(app.connected === ''){
           app.connected = app.nodes[Math.floor(Math.random()*app.nodes.length)];
-          app.connected = 'idanode01.scryptachain.org'
+          app.connected = "idanode01.scryptachain.org" //FIXED NODE FOR BETTER EXPERIENCE
         }
       },
       createDraft(){
@@ -67,17 +71,16 @@ export default {
           app.axios.post('https://' + app.connected + '/storage/write',
               {
                   dapp: app.scrypta.PubAddress,
-                  collection: 'CONTRACT',
+                  collection: 'SCRYPTACONTRACTS',
                   data: {
-                      "owner": app.public_address,
-                      "join": [
-                          app.public_address
-                      ]
+                      "owner": app.scrypta.PubAddress,
+                      "join": []
                   }
               })
               .then(function (response) {
                   app.isCreating = false
                   app.joinUrl = window.location.protocol + '//' + window.location.host + '/join/' + response.data.data
+                  app.manageUrl = window.location.protocol + '//' + window.location.host + '/draft/' + response.data.data
               })
               .catch(function () {
                   alert("Seems there's a problem, please retry or change node!")

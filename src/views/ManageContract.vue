@@ -5,23 +5,7 @@
     <div class="container main-container">
       <div class="row">
         <div class="col-sm-12">
-            <h3>Manage your drafts</h3>
-            <div v-if="!isLoading">
-              <div v-if="drafts.length > 0">
-                <div v-for="draft in drafts" v-bind:key="draft._id.$oid">
-                  <div v-if="draft.hash" class="draft-card">
-                    {{ draft.hash }}
-                    <b-button variant="primary" style="float:right; margin-top:-7px" v-on:click="manageDraft(draft.hash)">MANAGE</b-button>
-                  </div>
-                </div>
-              </div>
-              <div v-if="drafts.length === 0">
-                No drafts...
-              </div>
-            </div>
-            <div v-if="isLoading">
-              Fetching your drafts..
-            </div>
+            <h3>Manage contract</h3>
         </div>
       </div>
     </div>
@@ -30,7 +14,7 @@
 
 <script>
 export default {
-  name: 'manage-draft',
+  name: 'search-contracts',
   mounted : function(){
     this.checkIdaNodes()
     this.checkUser()
@@ -60,27 +44,7 @@ export default {
         if(app.connected == ''){
           app.connected = app.nodes[Math.floor(Math.random()*app.nodes.length)];
           app.connected = "idanode01.scryptachain.org" //FIXED NODE FOR BETTER EXPERIENCE
-          app.getDrafts()
         }
-      },
-      getDrafts(){
-          const app = this
-          app.isLoading = true
-          app.axios.post('https://' + app.connected + '/storage/read',
-              {
-                  dapp: app.scrypta.PubAddress,
-                  collection: 'SCRYPTACONTRACTS'
-              })
-              .then(function (response) {
-                app.isLoading = false
-                app.drafts = response.data.data
-              })
-              .catch(function () {
-                  alert("Seems there's a problem, please retry or change node!")
-              })
-      },
-      manageDraft(hash){
-        window.location = '/draft/' + hash
       }
   },
   data () {
@@ -92,9 +56,7 @@ export default {
       login: false,
       unlockPwd: "",
       public_address: '',
-      encrypted_wallet: '',
-      drafts: '',
-      isLoading: true
+      encrypted_wallet: ''
     }
   }
 }
@@ -106,12 +68,5 @@ export default {
   }
   .main-container{
     margin-top:30px
-  }
-  .draft-card{
-    border:1px solid #ccc; 
-    border-radius:5px; 
-    padding:20px;
-    text-align:left; 
-    margin:10px 0
   }
 </style>

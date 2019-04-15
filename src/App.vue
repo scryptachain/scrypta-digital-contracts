@@ -19,4 +19,7 @@
     padding:5px;
     border-top:1px solid #eee
   }
+  .main-container{
+    padding-bottom:60px;
+  }
 </style>
