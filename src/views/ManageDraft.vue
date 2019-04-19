@@ -171,7 +171,7 @@ export default {
               created_by: app.draft.data.owner,
               subject: app.subject,
               body: app.body,
-              participants: app.participants
+              participants: app.participants.join(',')
             }
             
             contractdata = JSON.stringify(contractdata)
