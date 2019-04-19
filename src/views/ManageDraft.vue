@@ -168,6 +168,7 @@ export default {
             var redeemScript = response.data.data.redeemScript
 
             var contractdata = {
+              created_by: app.draft.data.owner,
               subject: app.subject,
               body: app.body,
               participants: app.participants
