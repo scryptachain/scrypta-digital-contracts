@@ -158,22 +158,26 @@ export default {
       storeContract(){
         const app = this
         app.isStoring = true
-        app.axios.post('https://' + app.connected + '/initlink',
+        app.axios.post('https://' + app.connected + '/trustlink/init',
           {
               addresses: app.pubkeys.join(',')
           })
           .then(function (response) {
             var trustlink = response.data.data.address
+            var redeemScript = response.data.data.redeemScript
+
             var contractdata = {
               subject: app.subject,
               body: app.body,
               participants: app.pubkeys
             }
+            
             contractdata = JSON.stringify(contractdata)
-            app.axios.post('https://' + app.connected + '/writemultisig',
+            app.axios.post('https://' + app.connected + '/trustlink/write',
               {
-                  dapp_address: trustlink,
+                  trustlink: trustlink,
                   private_keys: app.privkeys.join(','),
+                  redeemScript, redeemScript,
                   protocol: 'contract://',
                   data: contractdata
               })
