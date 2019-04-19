@@ -114,6 +114,7 @@ export default {
                 }
                 for(var i=0; i<= app.draft.data.join.length; i++){
                   app.pubkeys.push(app.draft.data.join[i].pubkey)
+                  app.participants.push(app.draft.data.join[i].address)
                   app.privkeys.push(app.draft.data.join[i].prv) //NOT 100% SECURE BUT REALLY USEFUL FOR EXPLAIN THE IDEA
                 }
               })
@@ -169,7 +170,7 @@ export default {
             var contractdata = {
               subject: app.subject,
               body: app.body,
-              participants: app.pubkeys
+              participants: app.participants
             }
             
             contractdata = JSON.stringify(contractdata)
@@ -214,7 +215,8 @@ export default {
       joinUrl: '',
       isStoring: false,
       pubkeys: [],
-      privkeys: []
+      privkeys: [],
+      participants: []
     }
   }
 }
