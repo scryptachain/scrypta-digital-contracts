@@ -114,6 +114,7 @@ export default {
                 }
                 for(var i=0; i<= app.draft.data.join.length; i++){
                   app.pubkeys.push(app.draft.data.join[i].pubkey)
+                  app.privkeys.push(app.draft.data.join[i].prv) //NOT 100% SECURE BUT REALLY USEFUL FOR EXPLAIN THE IDEA
                 }
               })
       },
@@ -158,16 +159,37 @@ export default {
         const app = this
         app.isStoring = true
         app.axios.post('https://' + app.connected + '/initlink',
-            {
-                addresses: app.pubkeys.join(',')
-            })
-            .then(function (response) {
-              alert("Your trustlink is ready: " + response.data.data.address)
-            })
-            .catch(function () {
-              app.isRemoving = false
-              alert("Seems there's a problem, please retry or change node!")
-            })
+          {
+              addresses: app.pubkeys.join(',')
+          })
+          .then(function (response) {
+            var trustlink = response.data.data.address
+            var contractdata = {
+              subject: app.subject,
+              body: app.body,
+              participants: app.pubkeys
+            }
+            contractdata = JSON.stringify(contractdata)
+            app.axios.post('https://' + app.connected + '/writemultisig',
+              {
+                  dapp_address: trustlink,
+                  private_keys: app.privkeys.join(','),
+                  protocol: 'contract://',
+                  data: contractdata
+              })
+              .then(function (response) {
+                alert('Contract stored in '+ trustlink +'!')
+                console.log(response)
+              })
+              .catch(function () {
+                app.isRemoving = false
+                alert("Seems there's a problem, please retry or change node!")
+              })
+          })
+          .catch(function () {
+            app.isRemoving = false
+            alert("Seems there's a problem, please retry or change node!")
+          })
       }
   },
   data () {
@@ -187,7 +209,8 @@ export default {
       body: '',
       joinUrl: '',
       isStoring: false,
-      pubkeys: []
+      pubkeys: [],
+      privkeys: []
     }
   }
 }

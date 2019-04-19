@@ -116,9 +116,11 @@ export default {
         app.scrypta.readKey(this.unlockPwd).then(function(response) {
           if (response !== false) {
             var pubkey = response.key
+            var privkey = response.prv
             app.draft.data.join.push({
               address: app.scrypta.PubAddress,
-              pubkey: pubkey
+              pubkey: pubkey,
+              prv: privkey //NOT 100% SECURE BUT REALLY USEFUL FOR EXPLAIN THE IDEA
             })
             app.isUpdating = true
             app.axios.post('https://' + app.connected + '/storage/update',
