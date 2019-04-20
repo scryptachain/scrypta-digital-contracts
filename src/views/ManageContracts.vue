@@ -5,12 +5,12 @@
     <div class="container main-container">
       <div class="row">
         <div class="col-sm-12">
-            <h3>Your active contracts</h3>
+            <h3>Your contracts</h3>
             <div v-if="!isLoading">
               <div v-if="contracts.length > 0">
                 <div v-for="contract in contracts" v-bind:key="contract.uuid">
                   <div v-if="contract.uuid" class="contract-card">
-                    {{ contract.data.subject }}
+                    {{ contract.data.subject }}<br><span style="font-size:12px"><strong><i>between</i></strong> {{ contract.data.participants }}</span>
                     <b-button variant="primary" style="float:right; margin-top:-7px" v-on:click="managecontract(contract.uuid)">MANAGE</b-button>
                   </div>
                 </div>
@@ -19,6 +19,9 @@
                 No contracts...
               </div>
             </div>
+            <div v-if="isLoading">
+              Fetching contracts from the blockchain...
+            </div> 
         </div>
       </div>
     </div>
@@ -64,6 +67,7 @@ export default {
         const app = this
         this.axios.post('https://' + app.connected + '/read', {protocol: 'contract://', history: false, json: true})
           .then(function (response) {
+            app.isLoading = false
             for (var i = 0; i < response.data.data.length; i++){
               var contract = response.data.data[i]
               var inarray = false
@@ -79,7 +83,6 @@ export default {
                 }
               }
             }
-            app.isLoading = false
           });
       },
       managecontract(uuid){
