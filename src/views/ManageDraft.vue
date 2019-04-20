@@ -43,7 +43,8 @@
                       </div>
                   </div>
                   <div v-if="draft.data.join.length > 1">
-                    <b-button style="width:100%; margin-top:15px" v-on:click="storeContract()" variant="success">STORE CONTRACT</b-button>
+                    <b-button style="width:100%; margin-top:15px" v-if="!isStoring" v-on:click="storeContract()" variant="success">STORE CONTRACT</b-button>
+                    <div class="text-center" v-if="isStoring">Storing, please wait. You will be redirected to management page.</div>
                   </div>
                   <div v-if="draft.data.join.length <= 1">
                     You need at least 2 participants to create a contract on the blockchain
@@ -112,7 +113,7 @@ export default {
                 }else{
                   window.location = app.joinUrl
                 }
-                for(var i=0; i<= app.draft.data.join.length; i++){
+                for(var i=0; i< app.draft.data.join.length; i++){
                   app.pubkeys.push(app.draft.data.join[i].pubkey)
                   app.participants.push(app.draft.data.join[i].address)
                   app.privkeys.push(app.draft.data.join[i].prv) //NOT 100% SECURE BUT REALLY USEFUL FOR EXPLAIN THE IDEA
@@ -140,7 +141,7 @@ export default {
               alert("Seems there's a problem, please retry or change node!")
             })
       },
-      deleteDraft(){
+      deleteDraft(redirect = true){
         const app = this
         app.isRemoving = true
         app.axios.post('https://' + app.connected + '/storage/remove',
@@ -149,7 +150,9 @@ export default {
             })
             .then(function () {
               app.isRemoving = false
-              window.location = '/drafts'
+              if(redirect === true){
+                window.location = '/drafts'
+              }
             })
             .catch(function () {
               app.isRemoving = false
@@ -158,44 +161,46 @@ export default {
       },
       storeContract(){
         const app = this
-        app.isStoring = true
-        app.axios.post('https://' + app.connected + '/trustlink/init',
-          {
-              addresses: app.pubkeys.join(',')
-          })
-          .then(function (response) {
-            var trustlink = response.data.data.address
-            var redeemScript = response.data.data.redeemScript
+        if(app.isStoring === false){
+          app.isStoring = true
+          app.axios.post('https://' + app.connected + '/trustlink/init',
+            {
+                addresses: app.pubkeys.join(',')
+            })
+            .then(function (response) {
+              var trustlink = response.data.data.address
+              var redeemScript = response.data.data.redeemScript
 
-            var contractdata = {
-              created_by: app.draft.data.owner,
-              subject: app.subject,
-              body: app.body,
-              participants: app.participants.join(',')
-            }
-            
-            contractdata = JSON.stringify(contractdata)
-            app.axios.post('https://' + app.connected + '/trustlink/write',
-              {
-                  trustlink: trustlink,
-                  private_keys: app.privkeys.join(','),
-                  redeemScript, redeemScript,
-                  protocol: 'contract://',
-                  data: contractdata
-              })
-              .then(function (response) {
-                alert('Contract stored in '+ trustlink +'!')
-                console.log(response)
-              })
-              .catch(function () {
-                app.isRemoving = false
-                alert("Seems there's a problem, please retry or change node!")
-              })
-          })
-          .catch(function () {
-            app.isRemoving = false
-            alert("Seems there's a problem, please retry or change node!")
-          })
+              var contractdata = {
+                created_by: app.draft.data.owner,
+                subject: app.subject,
+                body: app.body,
+                participants: app.participants.join(',')
+              }
+              
+              contractdata = JSON.stringify(contractdata)
+              app.axios.post('https://' + app.connected + '/trustlink/write',
+                {
+                    trustlink: trustlink,
+                    private_keys: app.privkeys.join(','),
+                    redeemScript: redeemScript,
+                    protocol: 'contract://',
+                    data: contractdata
+                })
+                .then(function (response) {
+                  app.deleteDraft()
+                  window.location = '/manage/' + response.data.data.uuid
+                })
+                .catch(function () {
+                  app.isStoring = false
+                  alert("Seems there's a problem, please retry or change node!")
+                })
+            })
+            .catch(function () {
+              app.isStoring = false
+              alert("Seems there's a problem, please retry or change node!")
+            })
+        }
       }
   },
   data () {

@@ -6,6 +6,19 @@
       <div class="row">
         <div class="col-sm-12">
             <h3>Your active contracts</h3>
+            <div v-if="!isLoading">
+              <div v-if="contracts.length > 0">
+                <div v-for="contract in contracts" v-bind:key="contract.uuid">
+                  <div v-if="contract.uuid" class="contract-card">
+                    {{ contract.data.subject }}
+                    <b-button variant="primary" style="float:right; margin-top:-7px" v-on:click="managecontract(contract.uuid)">MANAGE</b-button>
+                  </div>
+                </div>
+              </div>
+              <div v-if="contracts.length === 0">
+                No contracts...
+              </div>
+            </div>
         </div>
       </div>
     </div>
@@ -44,7 +57,33 @@ export default {
         if(app.connected == ''){
           app.connected = app.nodes[Math.floor(Math.random()*app.nodes.length)];
           app.connected = "idanode01.scryptachain.org" //FIXED NODE FOR BETTER EXPERIENCE
+          app.fetchContracts()
         }
+      },
+      fetchContracts(){
+        const app = this
+        this.axios.post('https://' + app.connected + '/read', {protocol: 'contract://', history: false, json: true})
+          .then(function (response) {
+            for (var i = 0; i < response.data.data.length; i++){
+              var contract = response.data.data[i]
+              var inarray = false
+              if(contract.data.created_by && contract.data.created_by == app.scrypta.PubAddress){
+                app.contracts.push(contract)
+                inarray = true
+              }
+              if(contract.data.created_by && inarray === false){
+                var participants = contract.data.participants.split(',')
+                if(participants.indexOf(app.scrypta.PubAddress) !== -1){
+                  app.contracts.push(contract)
+                  inarray = true
+                }
+              }
+            }
+            app.isLoading = false
+          });
+      },
+      managecontract(uuid){
+        window.location = '/manage/' + uuid
       }
   },
   data () {
@@ -53,10 +92,8 @@ export default {
       axios: window.axios,
       nodes: [],
       connected: '',
-      login: false,
-      unlockPwd: "",
-      public_address: '',
-      encrypted_wallet: ''
+      contracts: [],
+      isLoading: true
     }
   }
 }
@@ -68,5 +105,12 @@ export default {
   }
   .main-container{
     margin-top:30px
+  }
+  .contract-card{
+    border:1px solid #ccc; 
+    border-radius:5px; 
+    padding:20px;
+    text-align:left; 
+    margin:10px 0
   }
 </style>

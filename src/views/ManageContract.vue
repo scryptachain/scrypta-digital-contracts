@@ -5,7 +5,31 @@
     <div class="container main-container">
       <div class="row">
         <div class="col-sm-12">
-            <h3>Manage contract</h3>
+            <div v-if="!isLoading">
+              <div v-if="contract" style="position:relative">
+                <b-button variant="primary" style="position:absolute; top:0; right:0; font-size:11px">Send data</b-button>
+                <h3>{{ contract.data.subject }}</h3>
+                {{ contract.address }}
+                <br><br>
+                <p style="text-align:justify">
+                  {{ contract.data.body }}
+                </p>
+                <hr>
+                <h4>Contract's history</h4>
+                <div v-if="!history">
+                  Nothing to show..
+                </div>
+                <div v-if="history">
+
+                </div>
+              </div>
+              <div v-if="!contract">
+                Contract not found
+              </div>
+            </div>
+            <div v-if="isLoading">
+              Loading contract from blockchain...
+            </div>
         </div>
       </div>
     </div>
@@ -44,7 +68,28 @@ export default {
         if(app.connected == ''){
           app.connected = app.nodes[Math.floor(Math.random()*app.nodes.length)];
           app.connected = "idanode01.scryptachain.org" //FIXED NODE FOR BETTER EXPERIENCE
+          app.fetchContract()
         }
+      },
+      fetchContract(){
+        const app = this
+        this.axios.post('https://' + app.connected + '/read', {uuid: app.$route.params.id, history: false, json: true})
+          .then(function (response) {
+            var contract = response.data.data
+            var inarray = false
+            if(contract.data.created_by && contract.data.created_by == app.scrypta.PubAddress){
+              app.contract = contract
+              inarray = true
+            }
+            if(contract.data.created_by && inarray === false){
+              var participants = contract.data.participants.split(',')
+              if(participants.indexOf(app.scrypta.PubAddress) !== -1){
+                app.contract = contract
+                inarray = true
+              }
+            }
+            app.isLoading = false
+          });
       }
   },
   data () {
@@ -53,10 +98,9 @@ export default {
       axios: window.axios,
       nodes: [],
       connected: '',
-      login: false,
-      unlockPwd: "",
-      public_address: '',
-      encrypted_wallet: ''
+      isLoading: true,
+      contract: '',
+      history: ''
     }
   }
 }
