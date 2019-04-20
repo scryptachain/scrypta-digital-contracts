@@ -122,7 +122,6 @@ export default {
             if(inarray === true){
               app.axios.post('https://' + app.connected + '/received', {address: app.contract.address})
                 .then(function (response) {
-                  console.log(response)
                   app.history = response.data.data
                 });
             }
