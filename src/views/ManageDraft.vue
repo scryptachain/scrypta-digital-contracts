@@ -163,6 +163,7 @@ export default {
         const app = this
         if(app.isStoring === false){
           app.isStoring = true
+          app.deleteDraft(false)
           app.axios.post('https://' + app.connected + '/trustlink/init',
             {
                 addresses: app.pubkeys.join(',')
@@ -188,7 +189,6 @@ export default {
                     data: contractdata
                 })
                 .then(function (response) {
-                  app.deleteDraft()
                   window.location = '/manage/' + response.data.data.uuid
                 })
                 .catch(function () {
