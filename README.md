@@ -1,75 +1,37 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+# Scrypta Contracts
 
-[travis-image]: https://api.travis-ci.org/nestjs/nest.svg?branch=master
-[travis-url]: https://travis-ci.org/nestjs/nest
-[linux-image]: https://img.shields.io/travis/nestjs/nest/master.svg?label=linux
-[linux-url]: https://travis-ci.org/nestjs/nest
-  
-  <p align="center">A progressive <a href="http://nodejs.org" target="blank">Node.js</a> framework for building efficient and scalable server-side applications, heavily inspired by <a href="https://angular.io" target="blank">Angular</a>.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/dm/@nestjs/core.svg" alt="NPM Downloads" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://api.travis-ci.org/nestjs/nest.svg?branch=master" alt="Travis" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://img.shields.io/travis/nestjs/nest/master.svg?label=linux" alt="Linux" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#5" alt="Coverage" /></a>
-<a href="https://gitter.im/nestjs/nestjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge"><img src="https://badges.gitter.im/nestjs/nestjs.svg" alt="Gitter" /></a>
-<a href="https://opencollective.com/nest#backer"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec"><img src="https://img.shields.io/badge/Donate-PayPal-dc3d53.svg"/></a>
-  <a href="https://twitter.com/nestframework"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+L'idea è quella di realizzare una piattaforma che permette di creare contratti digitali grazie alla blockchain, archiviarne i testi (se pubblici) oppure semplicemente notarizzare l'hash di un documento o di una cartella condivisa tra le parti.
 
-## Description
+La cosa più interessante della piattaforma non è la creazione del contratto di per se, ma è la gestione del post creazione, poichè le parti instaurano di fatto un rapporto digitale al cui interno possono essere scritte volontà comuni (ovvero firmate da tutti i partecipanti) così come volontà singole (ovvero scritte unilateralmente da una delle identità costituenti il contratto).
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Identità Scrypta e contratti
 
-## Installation
+L'identità Scrypta, come già esposto molte volte, può avere diversi livelli di "trust" partendo dal livello pseudonimo fino ad arrivare ad un livello altamente qualificato. La cosa importante da capire è che la firma digitale può di per sè significare poco o molto, dipende - a livello giuridico - se le parti hanno accettato o meno il riconoscimento di tale firma.
 
-```bash
-$ npm install
-```
+E' chiaro che nel caso di cui stiamo parlando la firma digitale, quindi l'identità digitale, deve essere assolutamente riconosciuta e accettata in quanto l'apporre la propria firma in un contratto del genere vuol dire sottoscriverne il contenuto.
 
-## Running the app
+Per questo non c'è bisogno di un'autorità centrale, ponendo questo strumento leggermente al di sopra della scrittura privata (in quanto notarizzata all'interno di uno strumento che non può essere alterato). Tuttavia sarebbe opportuno che almeno una delle parti del contratto sia identificabile in un avvocato, in un notaio o altra figura terza (Organo statale o comunale). Diciamo questo in quanto l'aspetto legale di questo tipo di contratti è strettamente collegato alla giurisdizione a cui si applica.
 
-```bash
-# development
-$ npm run start
+## Aspetto tecnico
 
-# watch mode
-$ npm run start:dev
+A livello strettamente tecnico la piattaforma di contratti utilizza la tecnologia Trustlink di Scrypta, questa permette di creare degli indirizzi che hanno facoltà di scrittura solo se il numero di firme corrisponde a quelle minime del contratto, identificando con `n` il numero minimo e `m` il numero massimo di firme. Questa tipologia di firme viene chiamata `multisignature` e solitamente viene utilizzata come un conto cointestato. Nel caso di Scrypta, che predilige il trasferimento di informazioni a quello di valore, questo si trasforma di fatto in un contratto.
 
-# production mode
-$ npm run start:prod
-```
+Per far interagire gli indirizzi e creare i contratti viene utilizzato un IdaNode sia per la parte di creazione che per la parte di firma dei contratti. E' assolutamente fondamentale che l'IdaNode che gestisce questi contratti sia di vostra proprietà in quanto le chiamate espongono le chiavi private degli utenti durante le operazioni di firma.
 
-## Test
+## Funzionalità
 
-```bash
-# unit tests
-$ npm run test
+Le funzionalità presenti nella dApp sono le seguenti e servono a gestire delle casistiche standard e che possono chiaramente essere ampliate.
 
-# e2e tests
-$ npm run test:e2e
+Le funzionalità presenti sono:
 
-# test coverage
-$ npm run test:cov
-```
+- Scrittura di contratti on-chain, il cui testo è visibile e pubblico all'interno della blockchain. Questo può servire per gli atti pubblici quali passaggi di proprietà, società, associazioni, matrimoni etc. 
+- Firma di contratti off-chain, il cui testo è rappresentato da un file .pdf di cui viene calcolato l'hash e questo viene notarizzato in blockchain. Questo può servire nel caso che l'atto controfirmato tra le parti sia privato e debba rimanere tale.
+- Caricamento su IPFS di contratti segreti, il cui testo è rappresentato da un file .pdf, criptato con una chiave comune ai partecipanti. Si consiglia l'utilizzo di questo sistema solamente nel caso in cui la chiave viene mantenuta tra parti fidate, non viene divulgata ed è sufficientemente sicura da garantire una buona resistenza ad attacchi brute-force.
 
-## Support
+Una volta che il contratto è stato caricato on-chain verrà assegnato un indirizzo leggermente differente dagli altri, che inizia con il numero `6` e la cui facoltà di scrittura è stabilita a priori grazie a quel rapporto `n` di `m`.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Esecuzione del contratto
 
-## Stay in touch
+Dopo che un contratto è stato firmato è possibile quindi inviare informazioni in modo unilaterale o unanime. Questo può tornare molto utile nel caso una delle due parti deve notificare qualcosa alle altre (unilaterale) o si arriva ad un cambio di accordi (unanime).
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-  Nest is [MIT licensed](LICENSE).
+L'invio di suddette informazioni può essere sempre di carattere testuale, sottoforma di file caricato grazie ad IPFS o semplicemente notificando l'hash della comunicazione, che può essere un'email, un pdf o altro.
