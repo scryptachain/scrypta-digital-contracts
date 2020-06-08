@@ -4,7 +4,7 @@
       <div class="container">
         <h1>Crea un nuovo contratto</h1>
         <hr>
-        <b-tabs v-model="activeTab" :animated="false">
+        <b-tabs v-model="activeTab" v-if="!isCreating" :animated="false">
             <b-tab-item label="Soggetti">
               <h1>
                 Soggetti
@@ -45,36 +45,84 @@
             </b-tab-item>
 
             <b-tab-item label="Oggetto">
-              <b-field label="Tipologia di contratto">
-                  <b-select v-model="type" placeholder="Seleziona una tipologia">
-                      <option
-                          v-for="option in types"
-                          :value="option.id"
-                          :key="option.id">
-                          {{ option.label }}
-                      </option>
-                  </b-select>
-              </b-field>
-              
-              <vue-editor v-if="type === 'plaintext'" v-model="plaintext" />
+              <h1>Inserisci del testo libero</h1>
+              <span style="color:#f00">Attenzione: il testo sarà pubblico all'interno della blockchain.</span><br>
+              <vue-editor v-model="plaintext" />
+              <br>
+              <div>
+                <h1>Allega dei file al contratto</h1>
+                <span style="color:#f00">Attenzione: i file <b>non</b> verranno caricati all'interno della blockchain o di altro spazio, si prega di conservare una copia al fine di poter verificare le informazioni scritte in blockchain.</span><br>
+                <section>
+                  <b-field>
+                      <b-upload v-on:input="calculateHashes" v-model="dropFiles" multiple drag-drop>
+                          <section class="section">
+                              <div class="content has-text-centered" style="width:100%">
+                                  <p>
+                                      <b-icon
+                                          icon="upload"
+                                          size="is-large">
+                                      </b-icon>
+                                  </p>
+                                  <p>Allega dei file trascinandoli o cliccando qui.</p>
+                              </div>
+                          </section>
+                      </b-upload>
+                  </b-field>
+
+                  <div class="tags">
+                      <span v-for="(file, index) in dropFiles"
+                          :key="index"
+                          class="tag is-primary" >
+                          {{file.name}}
+                          <button class="delete is-small"
+                              type="button"
+                              @click="deleteDropFile(index)">
+                          </button>
+                      </span>
+                  </div>
+              </section>
+              </div>
               <hr>
               <b-button type="is-primary" style="float:left" v-on:click="showSubjects()">INDIETRO</b-button>
               <b-button type="is-primary" style="float:right" v-on:click="showConfirm()">AVANTI</b-button>
             </b-tab-item>
-            <b-tab-item label="Conferma">
+            <b-tab-item label="Conferma" v-if="subjects.length >= 2 && (plaintext !== '' || files.length > 0)">
               <h1>Conferma tutti i dati e crea il contratto</h1>
+              <h3 style="font-size:20px; font-weight:bold">Soggetti</h3>
+              <div v-for="(key, index) in subjects" v-bind:key="index">
+                {{index}}) {{ key.nome }} {{ key.cognome }} - <span v-if="key.address.length === 34">{{ key.address }}</span><span v-if="key.address.length !== 34" style="color:#f00">Indirizzo non valido</span><br>
+              </div>
+              <hr>
+              <h3 style="font-size:20px; font-weight:bold">Oggetto</h3>
+              <div v-if="plaintext !== ''" v-html="plaintext"></div>
+              <div v-if="files.length > 0">
+                <div v-for="file in files" v-bind:key="file.hash" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+                    <v-gravatar :email="file.hash" style="float:left; height:55px; margin-right:10px;" />
+                    <strong>{{ file.filename }}</strong><br>
+                    <strong v-if="file.type">{{ file.type }} - </strong><strong>{{ file.size }} Byte</strong><br>
+                    <strong>Hash file:</strong> {{ file.hash }}
+                </div>
+              </div>
               <hr>
               <b-button type="is-primary" style="float:left" v-on:click="showObject()">INDIETRO</b-button>
-              <b-button type="is-primary" style="float:right" v-on:click="createDraft()">CREA CONTRATTO</b-button>
+              <b-button type="is-primary" style="float:right" v-on:click="createContract()">CREA CONTRATTO</b-button>
             </b-tab-item>
         </b-tabs>
+        <div v-if="isCreating" style="text-align: center; padding: 20vh">
+          <h1>Creazione digital contract in corso..</h1>
+          <h3>{{ trustlink.address }}</h3>
+          <div>{{ workingMessage }}</div>
+        </div>
       </div>
     </div>
+    <b-loading :is-full-page="true" :active.sync="isLoading" :can-cancel="true"></b-loading>
   </div>
 </template>
 
 <script>
   const ScryptaCore = require('@scrypta/core')
+  const crypto = require('crypto')
+  const LZUTF8 = require('lzutf8')
 
   export default {
     name: 'Home',
@@ -83,23 +131,42 @@
         scrypta: new ScryptaCore(true),
         address: '',
         wallet: '',
-        isLoading: true,
+        isLoading: false,
         url: '',
+        isCreating: false,
         activeTab: 0,
+        error: '',
         contract_address: '',
+        contract_sid: '',
         object: [],
-        subjects: [],
-        types: [
-          {label: "TESTO LIBERO (PUBBLICO)", id: "plaintext"},
-          {label: "SOLO CALCOLO HASH DI FILE (PRIVATO)", id: "hash"}
-        ],
-        type: 'plaintext',
-        plaintext: ''
+        trustlink: {
+          address: "Attendo la creazione dell'indirizzo"
+        },
+        files: [],
+        subjects: [{
+          nome: "theo",
+          cognome: "teardo",
+          address: "LUvRq5GygoJ4WMjiW8Zjis19jWK2mHdL2b"
+        },
+        {
+          nome: "ciccio",
+          cognome: "sultano",
+          address: "LchzGX6vqmanceCzNUMTk5cmnt1p6knGgT"
+        }],
+        dropFiles: [],
+        plaintext: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc non dapibus est. Integer sed maximus turpis. Nullam nec scelerisque lorem. Cras a luctus diam. Nam convallis lorem in dolor suscipit aliquam. Vestibulum dignissim maximus est, ac mollis risus malesuada at. Duis a urna ligula. Quisque viverra velit erat, sed venenatis mi rhoncus eu. Nulla id purus in risus placerat auctor ac vel lectus. Nullam in nisi ornare, gravida risus non, volutpat nisl. Nunc facilisis, diam eu convallis mattis, tellus quam eleifend nisl, sit amet lobortis odio tortor ac est. Proin nulla leo, congue eget tellus at, eleifend tempor sapien. Vivamus ut eleifend tortor.
+
+Cras vestibulum risus sed augue tincidunt dictum. Duis eget elit ac felis ullamcorper molestie. Curabitur a enim a mi malesuada luctus in sit amet elit. Curabitur consectetur convallis mi non convallis. Praesent eu ullamcorper sem, eget tincidunt turpis. Fusce sit amet ipsum in neque facilisis rutrum eget a sapien. Proin ipsum quam, sodales quis convallis at, eleifend eget tellus. Ut luctus metus ac euismod elementum. Vestibulum convallis est vitae ornare sodales. Quisque cursus fermentum dui, ac bibendum lorem rhoncus auctor. Proin dignissim consectetur efficitur. Duis tincidunt finibus accumsan. Donec luctus ornare libero, ac consequat neque sollicitudin tempus.
+
+Fusce porttitor mattis libero quis aliquet. Ut et faucibus justo, quis lobortis ante. Mauris viverra eu ante a tincidunt. Cras id consequat orci. Sed vulputate at massa in scelerisque. Pellentesque vel metus vulputate, bibendum nunc sit amet, eleifend lacus. Fusce at egestas lacus. Duis sed gravida massa, a semper tortor. Curabitur quis consectetur ligula. Maecenas metus erat, ullamcorper id euismod tincidunt, ullamcorper eu augue. Mauris non vulputate est, ut vehicula dolor. Donec sollicitudin risus ut libero tristique, eu vehicula mi efficitur. Proin eu sollicitudin ligula, vel imperdiet eros. Integer malesuada sollicitudin nulla sed vulputate.`,
+        workingMessage: ''
       }
     },
     async mounted() {
       const app = this
       app.wallet = await app.scrypta.returnDefaultIdentity()
+      app.scrypta.staticnodes = true
+      app.scrypta.mainnetIdaNodes = ['http://localhost:3001']
       let SIDS = app.wallet.split(':')
       app.address = SIDS[0]
       let identity = await app.scrypta.returnIdentity(app.address)
@@ -113,15 +180,173 @@
       app.url = currentURL
       let newaddress = await app.scrypta.createAddress('new', false)
       app.contract_address = newaddress.pub
-      app.scrypta.connectP2P(function(data){
-        console.log(data)
-      })
+      app.contract_sid = newaddress
+      /*app.scrypta.connectP2P(function(data){
+        try{
+          let object = JSON.parse(data.message)
+          if(object.contract === app.contract_address && object.action === 'join'){
+            let found = false
+            for(let x in app.subjects){
+              if(app.subjects[x].address === data.address){
+                found = true
+              }
+            }
+            if(found === false){
+              app.subjects.push({
+                nome: object.nome,
+                cognome: object.cognome,
+                address: data.address
+              })
+            }
+          }
+        }catch(e){
+          app.error = e
+        }
+      })*/
     },
     methods: {
-      async createDraft(){
+      async createContract(){
         const app = this
-        let be = await app.axios.get(app.backendURL)
-        console.log(be.data)
+        // VERIFICO OGNI INDIRIZZO
+        app.isCreating = true
+        if(app.subjects.length >= 2){
+          let validSubjects = true
+          let findTwins = false
+          app.workingMessage = 'Verifico gli indirizzi Lyra dei soggetti'
+          var subjectsToStore = []
+          let doublecheck = []
+          for(let k in app.subjects){
+            let subject = app.subjects[k]
+            let validate = await app.scrypta.get('/validate/' + subject.address)
+            if(validate.data.isvalid === false){
+              validSubjects = false
+            }else{
+              if(doublecheck.indexOf(subject.address) === -1){
+                doublecheck.push(subject.address)
+                let hash = crypto.createHash("sha256").update(JSON.stringify(subject)).digest("hex");
+                subjectsToStore.push({
+                  address: subject.address,
+                  hash: hash
+                })
+              }else{
+                findTwins = true
+                app.$buefy.toast.open({
+                  message: "Due soggetti hanno lo stesso indirizzo!",
+                  type: "is-danger"
+                })
+                app.isCreating = false
+              }
+            }
+          }
+          if(validSubjects === true && findTwins === false){
+            app.$buefy.dialog.prompt({
+              message: `Inserisci la password del wallet`,
+              inputAttrs: {
+                type: "password"
+              },
+              trapFocus: true,
+              onConfirm: async password => {
+                let key = await app.scrypta.readKey(password, app.wallet.wallet);
+                if (key !== false) {
+                  app.workingMessage = 'Creo l\'indirizzo del contratto...'
+                  let trustlink = await app.scrypta.post('/trustlink/init', {addresses: app.contract_sid.key + ',' + key.key })
+                  if(trustlink.data.address !== undefined && trustlink.data.address.length === 34){
+                    app.workingMessage = 'L\'indirizzo del contratto è ' + trustlink.data.address
+                    app.trustlink = trustlink.data
+                    app.workingMessage = 'Costruisco il contratto...'
+                    let objectToStore = ''
+                    if(app.plaintext !== ''){
+                      objectToStore = LZUTF8.compress(app.plaintext, {outputEncoding: 'Base64'})
+                    }
+                    let digitalcontract = {
+                      creator: app.address,
+                      address: trustlink.data.address,
+                      subjects: subjectsToStore,
+                      object: objectToStore,
+                      attachments: app.files
+                    }
+                    let contracthash = crypto.createHash("sha256").update(JSON.stringify(digitalcontract)).digest("hex");
+                    digitalcontract['hash'] = contracthash
+                    let length = JSON.stringify(digitalcontract).length
+                    let fees = Math.ceil(length / 7500) * 0.002
+                    app.workingMessage = 'Il contratto costerà ' + fees + ' LYRA'
+                    
+                    // CONTROLLO SE IL CONTRATTO HA ABBASTANZA FEE
+                    let checkbalance = await app.scrypta.get('/balance/' + trustlink.data.address)
+                    let fundresponse
+                    if(checkbalance.balance < fees){
+                      fundresponse = await app.fundContract(fees, key, trustlink)
+                    }else{
+                      fundresponse = true
+                    }
+
+                    if(fundresponse === true){
+                      let written = false
+                      let writeretries = 0
+                      let writeError = false
+                      app.workingMessage = 'Scrivo il contratto in blockchain...'
+                      while(written === false){
+                        let write = await app.scrypta.post('/trustlink/write', {
+                          trustlink: trustlink.data.address,
+                          redeemScript: trustlink.data.redeemScript,
+                          private_keys: app.contract_sid.prv + ',' + key.prv,
+                          data: JSON.stringify(digitalcontract),
+                          protocol: 'DC://'
+                        })
+                        console.log(write)
+                        if(write.txs.length > 0 && write.txs !== null && write.txs !== undefined){
+                          written = true
+                        }
+                        writeretries++
+                        if(writeretries > 30){
+                          writeError = true
+                          written = true
+                        }
+                      }
+
+                      if(written === true && writeError === false){
+                        app.workingMessage = 'Contratto scritto correttamente, reindirizzo in 5 secondi!'
+                        setTimeout(function(){
+                          window.location = '/#/contracts'
+                        },5000)
+                      }else{
+                        app.$buefy.toast.open({
+                          message: "Qualcosa non va con la scrittura del contratto, si prega di riprovare.",
+                          type: "is-danger"
+                        })
+                      }
+                    }
+                  }else{
+                    app.$buefy.toast.open({
+                      message: "Qualcosa non va con L'IdANode, si prega di riprovare!",
+                      type: "is-danger"
+                    })
+                  }
+                } else {
+                  app.$buefy.toast.open({
+                    message: "Wrong password!",
+                    type: "is-danger"
+                  })
+                  app.isCreating = false
+                }
+              }
+            })
+          }else{
+            app.$buefy.toast.open({
+              duration: 5000,
+              message: `Uno o più indirizzi sono invalidi, controllare gli indirizzi Lyra dei soggetti`,
+              type: 'is-danger'
+            })
+            app.isCreating = false
+          }
+        }else{
+          app.$buefy.toast.open({
+            duration: 5000,
+            message: `Inserire almeno due o più soggetti`,
+            type: 'is-danger'
+          })
+          app.isCreating = false
+        }
       },
       showSubjects(){
         const app = this
@@ -152,7 +377,103 @@
             app.subjects.push(temp[k])
           }
         }
+      },
+      deleteDropFile(index) {
+        const app = this
+        app.dropFiles.splice(index, 1)
+        app.calculateHashes()
+      },
+      fundContract(fees, key, trustlink){
+        const app = this
+        return new Promise(async response => {
+          let balance = await app.scrypta.get('/balance/' + app.wallet.address)
+          if(balance.balance >= fees){
+            app.workingMessage = 'Invio ' + fees + ' LYRA al contratto...'
+            let send = await app.scrypta.post('/trustlink/fund',{
+              amount: fees,
+              from: app.wallet.address,
+              trustlink: trustlink.data.address,
+              private_key: key.prv
+            })
+            if(send.success === true && send.txid !== undefined && send.txid.length === 64){
+              let trustlinkbalance = 0
+              let sendretries = 0
+              let sendError = false
+              app.workingMessage = 'Verifico che il balance sia quello richiesto...'
+              while(trustlinkbalance < fees){
+                let checkbalance = await app.scrypta.get('/balance/' + trustlink.data.address)
+                sendretries++
+                trustlinkbalance = checkbalance.balance
+                if(sendretries > 500){
+                  sendError = true
+                  trustlinkbalance = 999
+                }
+              }
+              if(sendError === true){
+                app.$buefy.toast.open({
+                  message: "Qualcosa non va con l'invio dei fondi, si prega di riprovare.",
+                  type: "is-danger"
+                })
+                response(false)
+              }else{
+                response(true)
+              }
+            }else{
+              app.$buefy.toast.open({
+                message: "Qualcosa non va con l'invio dei fondi, si prega di riprovare.",
+                type: "is-danger"
+              })
+              response(false)
+            }
+          }else{
+            app.$buefy.toast.open({
+              message: "Non hai abbastanza fondi da inviare al contratto",
+              type: "is-danger"
+            })
+            response(false)
+          }
+        })
+      },
+      async calculateHashes(){
+        const app = this
+        app.isLoading = true
+        app.$buefy.toast.open({
+            duration: 1500,
+            message: `Inizio a calcolare gli hash dei file`,
+            type: 'is-info'
+        })
+        app.files = []
+        for(let j in app.dropFiles){
+          var file = app.dropFiles[j];
+          await app.readFile(file)
+        }
+        app.isLoading = false
+        app.$buefy.toast.open({
+            duration: 5000,
+            message: `Calcolo hash completato`,
+            type: 'is-success'
+        })
+      },
+      readFile(file){
+        const app = this
+        return new Promise(response => {
+          var reader = new FileReader();
+          reader.onload = function(event) {
+            var readed = event.target.result;
+            let hash = crypto.createHash("sha256").update(new Uint8Array(readed)).digest("hex");
+            app.files.push({
+              hash: hash,
+              filename: file.name,
+              size: file.size,
+              lastModified: file.lastModified,
+              type: file.type
+            })
+            response(true)
+          };
+
+          reader.readAsArrayBuffer(file);
+        })
       }
-    },
+    }
   }
 </script>
