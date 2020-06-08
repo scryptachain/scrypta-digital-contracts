@@ -143,22 +143,9 @@
           address: "Attendo la creazione dell'indirizzo"
         },
         files: [],
-        subjects: [{
-          nome: "theo",
-          cognome: "teardo",
-          address: "LUvRq5GygoJ4WMjiW8Zjis19jWK2mHdL2b"
-        },
-        {
-          nome: "ciccio",
-          cognome: "sultano",
-          address: "LchzGX6vqmanceCzNUMTk5cmnt1p6knGgT"
-        }],
+        subjects: [],
         dropFiles: [],
-        plaintext: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc non dapibus est. Integer sed maximus turpis. Nullam nec scelerisque lorem. Cras a luctus diam. Nam convallis lorem in dolor suscipit aliquam. Vestibulum dignissim maximus est, ac mollis risus malesuada at. Duis a urna ligula. Quisque viverra velit erat, sed venenatis mi rhoncus eu. Nulla id purus in risus placerat auctor ac vel lectus. Nullam in nisi ornare, gravida risus non, volutpat nisl. Nunc facilisis, diam eu convallis mattis, tellus quam eleifend nisl, sit amet lobortis odio tortor ac est. Proin nulla leo, congue eget tellus at, eleifend tempor sapien. Vivamus ut eleifend tortor.
-
-Cras vestibulum risus sed augue tincidunt dictum. Duis eget elit ac felis ullamcorper molestie. Curabitur a enim a mi malesuada luctus in sit amet elit. Curabitur consectetur convallis mi non convallis. Praesent eu ullamcorper sem, eget tincidunt turpis. Fusce sit amet ipsum in neque facilisis rutrum eget a sapien. Proin ipsum quam, sodales quis convallis at, eleifend eget tellus. Ut luctus metus ac euismod elementum. Vestibulum convallis est vitae ornare sodales. Quisque cursus fermentum dui, ac bibendum lorem rhoncus auctor. Proin dignissim consectetur efficitur. Duis tincidunt finibus accumsan. Donec luctus ornare libero, ac consequat neque sollicitudin tempus.
-
-Fusce porttitor mattis libero quis aliquet. Ut et faucibus justo, quis lobortis ante. Mauris viverra eu ante a tincidunt. Cras id consequat orci. Sed vulputate at massa in scelerisque. Pellentesque vel metus vulputate, bibendum nunc sit amet, eleifend lacus. Fusce at egestas lacus. Duis sed gravida massa, a semper tortor. Curabitur quis consectetur ligula. Maecenas metus erat, ullamcorper id euismod tincidunt, ullamcorper eu augue. Mauris non vulputate est, ut vehicula dolor. Donec sollicitudin risus ut libero tristique, eu vehicula mi efficitur. Proin eu sollicitudin ligula, vel imperdiet eros. Integer malesuada sollicitudin nulla sed vulputate.`,
+        plaintext: '',
         workingMessage: ''
       }
     },
@@ -166,7 +153,7 @@ Fusce porttitor mattis libero quis aliquet. Ut et faucibus justo, quis lobortis 
       const app = this
       app.wallet = await app.scrypta.returnDefaultIdentity()
       app.scrypta.staticnodes = true
-      app.scrypta.mainnetIdaNodes = ['http://localhost:3001']
+      app.scrypta.mainnetIdaNodes = ['https://idanodejs01.scryptachain.org','https://idanodejs02.scryptachain.org','https://idanodejs03.scryptachain.org','https://idanodejs04.scryptachain.org','https://idanodejs05.scryptachain.org','https://idanodejs06.scryptachain.org']
       let SIDS = app.wallet.split(':')
       app.address = SIDS[0]
       let identity = await app.scrypta.returnIdentity(app.address)
@@ -181,7 +168,7 @@ Fusce porttitor mattis libero quis aliquet. Ut et faucibus justo, quis lobortis 
       let newaddress = await app.scrypta.createAddress('new', false)
       app.contract_address = newaddress.pub
       app.contract_sid = newaddress
-      /*app.scrypta.connectP2P(function(data){
+      app.scrypta.connectP2P(function(data){
         try{
           let object = JSON.parse(data.message)
           if(object.contract === app.contract_address && object.action === 'join'){
@@ -202,7 +189,7 @@ Fusce porttitor mattis libero quis aliquet. Ut et faucibus justo, quis lobortis 
         }catch(e){
           app.error = e
         }
-      })*/
+      })
     },
     methods: {
       async createContract(){
