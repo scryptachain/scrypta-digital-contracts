@@ -6,8 +6,8 @@ Vue.use(VueRouter)
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: () => import(/* webpackChunkName: "home" */ '../views/Home.vue')
+    name: 'Contracts',
+    component: () => import(/* webpackChunkName: "contracts" */ '../views/Contracts.vue')
   },
   {
     path: '/create',
@@ -15,19 +15,14 @@ const routes = [
     component: () => import(/* webpackChunkName: "create" */ '../views/Create.vue')
   },
   {
-    path: '/contracts',
-    name: 'Contracts',
-    component: () => import(/* webpackChunkName: "contracts" */ '../views/Contracts.vue')
-  },
-  {
     path: '/join/:address',
     name: 'Join',
     component: () => import(/* webpackChunkName: "join" */ '../views/Join.vue')
   },
   {
-    path: '/history',
-    name: 'History',
-    component: () => import(/* webpackChunkName: "history" */ '../views/History.vue')
+    path: '/contract/:contract',
+    name: 'Contract',
+    component: () => import(/* webpackChunkName: "contract" */ '../views/Contract.vue')
   }
 ]
 

@@ -14,17 +14,17 @@
               <div v-for="(key, index) in subjects" v-bind:key="index">
                 <div class="columns" style="position:relative">
                   <div class="column">
-                    <b-field :label="'Nome #' + index">
-                      <b-input v-model="subjects[index].nome"></b-input>
+                    <b-field :label="'Nome'">
+                      <b-input v-model="subjects[index].name"></b-input>
                     </b-field>
                   </div>
                   <div class="column">
-                    <b-field :label="'Cognome #' + index">
-                      <b-input v-model="subjects[index].cognome"></b-input>
+                    <b-field :label="'Cognome'">
+                      <b-input v-model="subjects[index].surname"></b-input>
                     </b-field>
                   </div>
                   <div class="column">
-                    <b-field :label="'Indirizzo Lyra #' + index">
+                    <b-field :label="'Indirizzo Lyra'">
                       <b-input v-model="subjects[index].address"></b-input>
                     </b-field>
                   </div>
@@ -32,7 +32,7 @@
                 </div>
               </div>
               <div v-if="subjects.length === 0">
-                <h2>In questa sezione dovrai inserire tutte le identità dei soggetti e le loro relative chiavi pubbliche. Se non sai come reperire le chiavi pubbliche chiedi ai soggetti di andare all'indirizzo di partecipazione del contratto e aggiungere le proprie identità.<br><br>
+                <h2>In questa sezione dovrai inserire tutte le identità dei soggetti e le loro relative chiavi pubbliche. Se non sai come reperire gli indirizzi chiedi ai soggetti di andare all'indirizzo di partecipazione del contratto e aggiungere le proprie identità.<br><br>
                 L'indirizzo di partecipazione è <a target="_blank" :href="url + '/#/join/' + contract_address">{{url}}/#/join/{{ contract_address }}</a>
                 <br><br>
                 <span style="color:#f00">
@@ -45,13 +45,15 @@
             </b-tab-item>
 
             <b-tab-item label="Oggetto">
-              <h1>Inserisci del testo libero</h1>
-              <span style="color:#f00">Attenzione: il testo sarà pubblico all'interno della blockchain.</span><br>
+              <h1>Inserisci informazioni pubbliche</h1>
+              <b-field :label="'Titolo'">
+                <b-input v-model="title"></b-input>
+              </b-field>
               <vue-editor v-model="plaintext" />
-              <br>
+              <br><span style="color:#f00">Attenzione: il testo e il titolo saranno pubblici all'interno della blockchain.</span>
+              <hr>
               <div>
                 <h1>Allega dei file al contratto</h1>
-                <span style="color:#f00">Attenzione: i file <b>non</b> verranno caricati all'interno della blockchain o di altro spazio, si prega di conservare una copia al fine di poter verificare le informazioni scritte in blockchain.</span><br>
                 <section>
                   <b-field>
                       <b-upload v-on:input="calculateHashes" v-model="dropFiles" multiple drag-drop>
@@ -80,22 +82,31 @@
                           </button>
                       </span>
                   </div>
+                  
+                  <span style="color:#f00">Attenzione: i file <b>non</b> verranno caricati all'interno della blockchain o di altro spazio, si prega di conservare una copia al fine di poter verificare le informazioni scritte in blockchain.</span><br>
               </section>
               </div>
               <hr>
               <b-button type="is-primary" style="float:left" v-on:click="showSubjects()">INDIETRO</b-button>
-              <b-button type="is-primary" style="float:right" v-on:click="showConfirm()">AVANTI</b-button>
+              <b-button type="is-primary" v-if="subjects.length >= 2 && (plaintext !== '' || files.length > 0)" style="float:right" v-on:click="showConfirm()">AVANTI</b-button>
             </b-tab-item>
             <b-tab-item label="Conferma" v-if="subjects.length >= 2 && (plaintext !== '' || files.length > 0)">
               <h1>Conferma tutti i dati e crea il contratto</h1>
               <h3 style="font-size:20px; font-weight:bold">Soggetti</h3>
-              <div v-for="(key, index) in subjects" v-bind:key="index">
-                {{index}}) {{ key.nome }} {{ key.cognome }} - <span v-if="key.address.length === 34">{{ key.address }}</span><span v-if="key.address.length !== 34" style="color:#f00">Indirizzo non valido</span><br>
+              <div v-for="(key, index) in subjects" v-bind:key="index" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+                <v-gravatar :email="key.address" style="float:left; height:55px; margin-right:10px;" />
+                Soggetto #{{index}}<br>
+                <span v-if="key.name === '' || key.surname === ''" style="color:#f00">Nome non valido</span>
+                <strong>{{ key.name }} {{ key.surname }}</strong><br>
+                <span v-if="key.address.length === 34">{{ key.address }}</span>
+                <span v-if="key.address.length !== 34" style="color:#f00">Indirizzo non valido</span>
               </div>
               <hr>
-              <h3 style="font-size:20px; font-weight:bold">Oggetto</h3>
+              <h3 style="font-size:20px; font-weight:bold">Oggetto</h3><br>
               <div v-if="plaintext !== ''" v-html="plaintext"></div>
               <div v-if="files.length > 0">
+                <hr>
+                <h3 style="font-size:20px; font-weight:bold">Allegati</h3>
                 <div v-for="file in files" v-bind:key="file.hash" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                     <v-gravatar :email="file.hash" style="float:left; height:55px; margin-right:10px;" />
                     <strong>{{ file.filename }}</strong><br>
@@ -145,6 +156,7 @@
         files: [],
         subjects: [],
         dropFiles: [],
+        title: '',
         plaintext: '',
         workingMessage: ''
       }
@@ -154,6 +166,7 @@
       app.wallet = await app.scrypta.returnDefaultIdentity()
       app.scrypta.staticnodes = true
       app.scrypta.mainnetIdaNodes = ['https://idanodejs01.scryptachain.org','https://idanodejs02.scryptachain.org','https://idanodejs03.scryptachain.org','https://idanodejs04.scryptachain.org','https://idanodejs05.scryptachain.org','https://idanodejs06.scryptachain.org']
+      app.scrypta.mainnetIdaNodes = ['http://localhost:3001']
       let SIDS = app.wallet.split(':')
       app.address = SIDS[0]
       let identity = await app.scrypta.returnIdentity(app.address)
@@ -180,8 +193,8 @@
             }
             if(found === false){
               app.subjects.push({
-                nome: object.nome,
-                cognome: object.cognome,
+                name: object.name,
+                surname: object.surname,
                 address: data.address
               })
             }
@@ -210,9 +223,13 @@
             }else{
               if(doublecheck.indexOf(subject.address) === -1){
                 doublecheck.push(subject.address)
-                let hash = crypto.createHash("sha256").update(JSON.stringify(subject)).digest("hex");
+                let hash = crypto.createHash("sha256").update(JSON.stringify(subject)).digest("hex")
                 subjectsToStore.push({
                   address: subject.address,
+                  identity: {
+                    name: subject.name,
+                    surname: subject.surname
+                  },
                   hash: hash
                 })
               }else{
@@ -245,14 +262,35 @@
                     if(app.plaintext !== ''){
                       objectToStore = LZUTF8.compress(app.plaintext, {outputEncoding: 'Base64'})
                     }
+
+                    let titleToStore = ''
+                    if(app.title !== ''){
+                      titleToStore = LZUTF8.compress(app.title, {outputEncoding: 'Base64'})
+                    }
+
+                    for(let kk in subjectsToStore){
+                      subjectsToStore[kk].identity = await app.scrypta.cryptData(JSON.stringify(subjectsToStore[kk].identity), key.prv)
+                    }
+
+                    let contractToStore = {
+                      prv: app.contract_sid.prv,
+                      key: app.contract_sid.key,
+                      redeemScript: trustlink.data.redeemScript
+                    }
+
+                    contractToStore = await app.scrypta.cryptData(JSON.stringify(contractToStore), key.prv)
+                    
                     let digitalcontract = {
+                      v: 1,
+                      title: titleToStore,
+                      contract: contractToStore,
                       creator: app.address,
                       address: trustlink.data.address,
                       subjects: subjectsToStore,
                       object: objectToStore,
                       attachments: app.files
                     }
-                    let contracthash = crypto.createHash("sha256").update(JSON.stringify(digitalcontract)).digest("hex");
+                    let contracthash = crypto.createHash("sha256").update(JSON.stringify(digitalcontract)).digest("hex")
                     digitalcontract['hash'] = contracthash
                     let length = JSON.stringify(digitalcontract).length
                     let fees = Math.ceil(length / 7500) * 0.002
@@ -280,12 +318,11 @@
                           data: JSON.stringify(digitalcontract),
                           protocol: 'DC://'
                         })
-                        console.log(write)
                         if(write.txs.length > 0 && write.txs !== null && write.txs !== undefined){
                           written = true
                         }
                         writeretries++
-                        if(writeretries > 30){
+                        if(writeretries > 300){
                           writeError = true
                           written = true
                         }
@@ -294,7 +331,7 @@
                       if(written === true && writeError === false){
                         app.workingMessage = 'Contratto scritto correttamente, reindirizzo in 5 secondi!'
                         setTimeout(function(){
-                          window.location = '/#/contracts'
+                          window.location = '/#/'
                         },5000)
                       }else{
                         app.$buefy.toast.open({
@@ -350,8 +387,8 @@
       addSubject(){
         const app = this
         app.subjects.push({
-          nome: "",
-          cognome: "",
+          name: "",
+          surname: "",
           address: ""
         })
       },
