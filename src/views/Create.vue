@@ -166,7 +166,6 @@
       app.wallet = await app.scrypta.returnDefaultIdentity()
       app.scrypta.staticnodes = true
       app.scrypta.mainnetIdaNodes = ['https://idanodejs01.scryptachain.org','https://idanodejs02.scryptachain.org','https://idanodejs03.scryptachain.org','https://idanodejs04.scryptachain.org','https://idanodejs05.scryptachain.org','https://idanodejs06.scryptachain.org']
-      app.scrypta.mainnetIdaNodes = ['http://localhost:3001']
       let SIDS = app.wallet.split(':')
       app.address = SIDS[0]
       let identity = await app.scrypta.returnIdentity(app.address)
@@ -293,7 +292,7 @@
                     let contracthash = crypto.createHash("sha256").update(JSON.stringify(digitalcontract)).digest("hex")
                     digitalcontract['hash'] = contracthash
                     let length = JSON.stringify(digitalcontract).length
-                    let fees = Math.ceil(length / 7500) * 0.002
+                    let fees = Math.ceil(length / 7500) * 0.003
                     app.workingMessage = 'Il contratto costerà ' + fees + ' LYRA'
                     
                     // CONTROLLO SE IL CONTRATTO HA ABBASTANZA FEE

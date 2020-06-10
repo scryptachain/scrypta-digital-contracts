@@ -10,11 +10,11 @@
         <div v-if="isLoading === false">
           <div class="columns">
             <div class="column" v-if="address === contract.data.creator">
-              <b-button type="is-primary" v-on:click="decryptData" size="is-large" style="width:100%!important">DECODIFICA INFORMAZIONI SENSIBILI</b-button>
+              <b-button type="is-primary" v-on:click="decryptData" size="is-large" style="width:100%!important">DECODIFICA INFORMAZIONI</b-button>
             </div>
             <div class="column" v-if="signs.indexOf(address) === -1">
               <b-button type="is-primary" v-if="!isSigning" v-on:click="signContract" size="is-large" style="width:100%!important">FIRMA CONTRATTO</b-button>
-              <span v-if="isSigning">Firmo il contratto...</span>
+              <span v-if="isSigning" style="padding:10px; text-align:center">Firmo il contratto...</span>
             </div>
           </div>
          <h3 style="font-size:20px; font-weight:bold">Soggetti</h3>
@@ -70,6 +70,16 @@
               </div>
             </div>
           </div>
+
+          <div v-if="address === contract.data.creator">
+            <hr>
+            <h1>Invalida contratto</h1>
+            <span style="color:#f00"><b>Attenzione</b>, invalidando il contratto non lo vedrete, ma non potrete cancellare lo storico dalla blockchain in quanto il registro è immutabile. Le firme dei soggetti non vengono eliminate, quindi si prega di stare ben attenti se il contratto ha valenza legale.</span><br><br>
+            <b-button v-if="!isInvalidating" type="is-primary" v-on:click="invalidateContract" size="is-large" style="width:100%!important">INVALIDA ORA</b-button>
+            <div v-if="isInvalidating === true">
+              Invalido il contratto si prega di attendere...
+            </div>
+          </div>
         </div>
         <div v-if="isLoading === true">
           Carico contratto dalla blockchain...
@@ -93,6 +103,7 @@
         wallet: '',
         isLoading: true,
         isSigning: false,
+        isInvalidating: false,
         contract: {
           data: {
             title: ""
@@ -109,6 +120,9 @@
       const app = this
       app.wallet = await app.scrypta.returnDefaultIdentity()
       let SIDS = app.wallet.split(':')
+      app.scrypta.staticnodes = true
+      app.scrypta.mainnetIdaNodes = ['https://idanodejs01.scryptachain.org','https://idanodejs02.scryptachain.org','https://idanodejs03.scryptachain.org','https://idanodejs04.scryptachain.org','https://idanodejs05.scryptachain.org','https://idanodejs06.scryptachain.org']
+      app.scrypta.mainnetIdaNodes = ['http://localhost:3001']
       app.address = SIDS[0]
       let identity = await app.scrypta.returnIdentity(app.address)
       app.wallet = identity
@@ -287,6 +301,132 @@
             response(false)
           }
         })
+      },
+      fundContract(fees, key){
+        const app = this
+        return new Promise(async response => {
+          let balance = await app.scrypta.get('/balance/' + app.wallet.address)
+          if(balance.balance >= fees){
+            app.workingMessage = 'Invio ' + fees + ' LYRA al contratto...'
+            let send = await app.scrypta.post('/trustlink/fund',{
+              amount: fees,
+              from: app.wallet.address,
+              trustlink: app.contract.address,
+              private_key: key.prv
+            })
+            if(send.success === true && send.txid !== undefined && send.txid.length === 64){
+              let trustlinkbalance = 0
+              let sendretries = 0
+              let sendError = false
+              app.workingMessage = 'Verifico che il balance sia quello richiesto...'
+              while(trustlinkbalance < fees){
+                let checkbalance = await app.scrypta.get('/balance/' + app.contract.address)
+                sendretries++
+                trustlinkbalance = checkbalance.balance
+                if(sendretries > 500){
+                  sendError = true
+                  trustlinkbalance = 999
+                }
+              }
+              if(sendError === true){
+                app.$buefy.toast.open({
+                  message: "Qualcosa non va con l'invio dei fondi, si prega di riprovare.",
+                  type: "is-danger"
+                })
+                response(false)
+              }else{
+                response(true)
+              }
+            }else{
+              app.$buefy.toast.open({
+                message: "Qualcosa non va con l'invio dei fondi, si prega di riprovare.",
+                type: "is-danger"
+              })
+              response(false)
+            }
+          }else{
+            app.$buefy.toast.open({
+              message: "Non hai abbastanza fondi da inviare al contratto",
+              type: "is-danger"
+            })
+            response(false)
+          }
+        })
+      },
+      invalidateContract(){
+        const app = this
+        if(app.contract.data.creator === app.address){
+          app.$buefy.dialog.prompt({
+            message: `Inserisci la password del wallet`,
+            inputAttrs: {
+              type: "password"
+            },
+            trapFocus: true,
+            onConfirm: async password => {
+              let key = await app.scrypta.readKey(password, app.wallet.wallet)
+              if (key !== false) {
+                let balance = await app.scrypta.get('/balance/' + app.wallet.address)
+                if(balance.balance >= 0.002){
+                  app.isInvalidating = true
+                  let contract = await app.scrypta.decryptData(app.contract.data.contract, key.prv)
+                  contract = JSON.parse(JSON.parse(contract))
+                  let fundresponse
+                  let checkbalance = await app.scrypta.get('/balance/' + app.contract.address)
+                  if(checkbalance.balance < 0.002){
+                    fundresponse = await app.fundContract(0.001, key)
+                  }else{
+                    fundresponse = true
+                  }
+
+                  if(fundresponse === true){
+                    let invalidate = await app.scrypta.post('/trustlink/invalidate',{
+                      trustlink: app.contract.address,
+                      private_keys: contract.prv + ',' + key.prv,
+                      redeemScript: contract.redeemScript,
+                      uuid: app.contract.uuid
+                    })
+                    if(invalidate.success === true && invalidate.txid !== null && invalidate.txid.length === 64){
+                      app.$buefy.toast.open({
+                        message: "Contratto invalidato, potrebbero volerci più di 2 minuti per la conferma.",
+                        type: "is-success"
+                      })
+                      setTimeout(function(){
+                        window.location = '/#/'
+                      })
+                    }else{
+                      app.$buefy.toast.open({
+                        message: "Errore nell'invalidazione, si prega di riprovare.",
+                        type: "is-danger"
+                      })
+                      app.isInvalidating = false
+                    }
+                  }else{
+                    app.$buefy.toast.open({
+                      message: "Errore nell'invio dei fondi al contratto, si prega di riprovare.",
+                      type: "is-danger"
+                    })
+                  }
+                }else{
+                  app.$buefy.toast.open({
+                    message: "Non puoi invalidare il contratto.",
+                    type: "is-danger"
+                  })
+                  app.isInvalidating = false
+                }
+              }else{
+                app.$buefy.toast.open({
+                  message: "La password è errata!",
+                  type: "is-danger"
+                })
+              }
+            }
+          })
+        }else{
+          app.$buefy.toast.open({
+            message: "Non puoi annullare il contratto in quanto non proprietario!",
+            type: "is-danger"
+          })
+        }
       }
     },
   }
