@@ -43,11 +43,16 @@
             <div class="columns">
               <div class="column">
                 <h3 style="font-size:20px; font-weight:bold">Allegati in blockchain</h3>
-                <div v-for="file in contract.data.attachments" v-bind:key="file.hash" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+                <div v-for="file in contract.data.attachments" v-bind:key="file.hash" style="border:1px solid #ccc; position:relative; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                     <v-gravatar :email="file.hash" style="float:left; height:55px; margin-right:10px;" />
                     <strong>{{ file.filename }}</strong><br>
                     <strong v-if="file.type">{{ file.type }} - </strong><strong>{{ file.size }} Byte</strong><br>
                     <strong>Hash file:</strong> {{ file.hash }}
+                    <b-icon
+                        v-if="verified.indexOf(file.hash) !== -1"
+                        style="position:absolute; top:30px; right:30px; color: green"
+                        icon="thumb-up">
+                    </b-icon>
                 </div>
               </div>
               <div class="column">
@@ -73,11 +78,11 @@
 
           <div v-if="address === contract.data.creator">
             <hr>
-            <h1>Invalida contratto</h1>
-            <span style="color:#f00"><b>Attenzione</b>, invalidando il contratto non lo vedrete, ma non potrete cancellare lo storico dalla blockchain in quanto il registro è immutabile. Le firme dei soggetti non vengono eliminate, quindi si prega di stare ben attenti se il contratto ha valenza legale.</span><br><br>
-            <b-button v-if="!isInvalidating" type="is-primary" v-on:click="invalidateContract" size="is-large" style="width:100%!important">INVALIDA ORA</b-button>
+            <h1>Archivia contratto</h1>
+            <span style="color:#f00"><b>Attenzione</b>, archiviando il contratto non lo vedrete, ma non potrete cancellare lo storico dalla blockchain in quanto il registro è immutabile. Le firme dei soggetti non vengono eliminate, quindi si prega di stare ben attenti se il contratto ha valenza legale.</span><br><br>
+            <b-button v-if="!isInvalidating" type="is-primary" v-on:click="invalidateContract" size="is-large" style="width:100%!important">ARCHIVIA ORA</b-button>
             <div v-if="isInvalidating === true">
-              Invalido il contratto si prega di attendere...
+              Archivio il contratto si prega di attendere...
             </div>
           </div>
         </div>
@@ -93,6 +98,7 @@
 <script>
   const ScryptaCore = require('@scrypta/core')
   const LZUTF8 = require('lzutf8')
+  const crypto = require('crypto')
 
   export default {
     name: 'Home',
@@ -113,7 +119,9 @@
         interactions: [],
         signs: [],
         signsdetails: {},
-        dropFiles: []
+        dropFiles: [],
+        files: [],
+        verified: []
       }
     },
     async mounted() {
@@ -254,25 +262,47 @@
           })
         }
       },
+      readFile(file){
+        const app = this
+        return new Promise(response => {
+          var reader = new FileReader();
+          reader.onload = function(event) {
+            var readed = event.target.result;
+            let hash = crypto.createHash("sha256").update(new Uint8Array(readed)).digest("hex")
+            for(let k in app.contract.data.attachments){
+              let attachment = app.contract.data.attachments[k]
+              if(attachment.hash.toString() === hash.toString()){
+                app.files.push({
+                  hash: hash,
+                  filename: file.name,
+                  size: file.size,
+                  lastModified: file.lastModified,
+                  type: file.type
+                })
+                app.verified.push(hash)
+              }
+            }
+            response(true)
+          };
+
+          reader.readAsArrayBuffer(file);
+        })
+      },
       async calculateHashes(){
         const app = this
-        app.isLoading = true
         app.$buefy.toast.open({
             duration: 1500,
-            message: `Inizio a calcolare gli hash dei file`,
+            message: `Inizio a verificare i file`,
             type: 'is-info'
         })
+        
         app.files = []
+        app.verified = []
+
         for(let j in app.dropFiles){
           var file = app.dropFiles[j];
           await app.readFile(file)
         }
-        app.isLoading = false
-        app.$buefy.toast.open({
-            duration: 5000,
-            message: `Calcolo hash completato`,
-            type: 'is-success'
-        })
       },
       writeSign(key, password){
         const app = this
