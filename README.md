@@ -1,8 +1,8 @@
-# Scrypta Contracts
+# Scrypta Digital Contracts
 
-L'idea è quella di realizzare una piattaforma che permette di creare contratti digitali grazie alla blockchain, archiviarne i testi (se pubblici) oppure semplicemente notarizzare l'hash di un documento o di una cartella condivisa tra le parti.
+E' una piattaforma che permette di creare contratti digitali grazie alla blockchain, archiviarne i testi (se pubblici) oppure semplicemente notarizzare l'hash di un documento o di una cartella condivisa tra le parti.
 
-La cosa più interessante della piattaforma non è la creazione del contratto di per se, ma è la gestione del post creazione, poichè le parti instaurano di fatto un rapporto digitale al cui interno possono essere scritte volontà comuni (ovvero firmate da tutti i partecipanti) così come volontà singole (ovvero scritte unilateralmente da una delle identità costituenti il contratto).
+La cosa più interessante della piattaforma non è la creazione del contratto di per se, ma è la gestione del post creazione, poichè le parti instaurano di fatto un rapporto digitale al cui interno possono essere scritte volontà comuni (ovvero l'oggetto del contratto controfirmato dai partecipanti) così come volontà singole (ovvero scritte unilateralmente da una delle identità costituenti il contratto).
 
 ## Identità Scrypta e contratti
 
@@ -34,3 +34,9 @@ Una volta che il contratto è stato caricato on-chain verrà assegnato un indiri
 Dopo che un contratto è stato firmato è possibile quindi inviare informazioni in modo unilaterale o unanime. Questo può tornare molto utile nel caso una delle due parti deve notificare qualcosa alle altre (unilaterale) o si arriva ad un cambio di accordi (unanime).
 
 L'invio di suddette informazioni può essere sempre di carattere testuale o sottoforma di hash dei file e all'interno della piattaforma vengono chiamate "Notifiche".
+
+## Risoluzione del contratto
+
+Il contratto può essere risolto così come ogni altro contratto, ovvero inviando comunicazione di rescissione entro i termini oppure per naturale decadenza del contratto in base a quanto scritto all'interno.
+
+Quando un contratto viene a decadere è bene che il creatore del contratto lo archivi, attraverso l'apposita funzionalità.
