@@ -42,8 +42,7 @@
             <div class="card">
               <div style="padding: 50px 20px;">
                 <img src="/logo.png"><br>
-                <h1 class="title is-1">Scrypta Digital Contracts</h1><br><br>
-                <br />
+                <h1 class="title is-1">Scrypta Digital Contracts</h1>
                 <h2 class="subtitle">
                   <br />Hai bisogno un'identità Scrypta per entrare in piattaforma.<br>Puoi entrare grazie al tuo .sid, se lo possiedi, oppure puoi creare una nuova identità ora.
                   <br />
