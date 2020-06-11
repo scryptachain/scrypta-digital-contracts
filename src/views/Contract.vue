@@ -98,6 +98,7 @@
                     <hr>
                     <div v-if="notification.data.message.plaintext !== ''" v-html="notification.data.message.plaintext"></div>
                     <div v-if="notification.data.message.attachments.length > 0">
+                      <hr>
                       <h1>Allegati</h1>
                       <div v-for="file in notification.data.message.attachments" v-bind:key="file.hash" style="border:1px solid #ccc; position:relative; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                           <v-gravatar :email="file.hash" style="float:left; height:55px; margin-right:10px;" />
@@ -105,14 +106,14 @@
                           <strong v-if="file.type">{{ file.type }} - </strong><strong>{{ file.size }} Byte</strong><br>
                           <strong>Hash file:</strong> {{ file.hash }}
                           <b-icon
-                              v-if="verified.indexOf(file.hash) !== -1"
+                              v-if="verified_attachments.indexOf(file.hash) !== -1"
                               style="position:absolute; top:30px; right:30px; color: green"
                               icon="checkbox-marked-circle">
                           </b-icon>
-                      </div>
+                      </div><hr>
                       <h3 style="font-size:20px; font-weight:bold">Verifica allegati</h3><br>
                       <b-field>
-                          <b-upload v-on:input="calculateHashes" v-model="dropFiles" multiple drag-drop>
+                          <b-upload v-on:input="verifyAttachments(notification)" v-model="dropFiles_verify" multiple drag-drop>
                               <section class="section">
                                   <div class="content has-text-centered" style="width:100%">
                                       <p>
@@ -235,6 +236,8 @@
         attachments_notify: [],
         plaintext_notify: '',
         dropFiles_notify: [],
+        dropFiles_verify: [],
+        verified_attachments: []
       }
     },
     async mounted() {
@@ -711,6 +714,40 @@
             response(false)
           }
         })
+      },
+      verifyFile(file, notification){
+        const app = this
+        return new Promise(response => {
+          var reader = new FileReader();
+          reader.onload = function(event) {
+            var readed = event.target.result;
+            let hash = crypto.createHash("sha256").update(new Uint8Array(readed)).digest("hex")
+            for(let k in notification.data.message.attachments){
+              let attachment = notification.data.message.attachments[k]
+              if(attachment.hash.toString() === hash.toString()){
+                app.verified_attachments.push(hash)
+              }
+            }
+            response(true)
+          };
+
+          reader.readAsArrayBuffer(file);
+        })
+      },
+      async verifyAttachments(notification){
+        const app = this
+        app.$buefy.toast.open({
+            duration: 1500,
+            message: `Inizio a verificare i file`,
+            type: 'is-info'
+        })
+        
+        app.verified_attachments = []
+
+        for(let j in app.dropFiles_verify){
+          var file = app.dropFiles_verify[j];
+          await app.verifyFile(file, notification)
+        }
       },
     },
   }
