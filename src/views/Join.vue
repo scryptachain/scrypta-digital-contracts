@@ -75,7 +75,6 @@
           })
         }else{
           app.$buefy.toast.open({
-              duration: 5000,
               message: `Inserisci nome e cognome prima di inviare le informazioni al contratto`,
               type: 'is-danger'
           })

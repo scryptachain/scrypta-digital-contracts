@@ -2,7 +2,7 @@
   <div class="home">
     <div class="main text-left">
       <div class="container">
-        <h1>I miei contratti</h1>
+        <h1>Contratti archiviati</h1>
         <hr>
         <div v-if="contracts.length > 0">
           <div v-for="contract in contracts" v-bind:key="contract.data.hash">
@@ -58,18 +58,25 @@
       app.address = SIDS[0]
       let identity = await app.scrypta.returnIdentity(app.address)
       app.wallet = identity
-      let contracts = await app.scrypta.post('/read', { protocol: 'DC://' })
+      let active = await app.scrypta.post('/read', { protocol: 'DC://' })
+      let active_contracts = []
+      for(let k in active.data){
+        active_contracts.push(active.data[k].address)
+      }
+      let contracts = await app.scrypta.post('/read', { protocol: 'DC://', history: true })
       for(let k in contracts.data){
         let contract = contracts.data[k]
-        let subjects = []
-        for(let j in contract.data.subjects){
-          subjects.push(contract.data.subjects[j].address)
-        }
-        if(contract.data.creator === app.address || subjects.indexOf(app.address) !== -1){
-          if(contract.data.title !== undefined && contract.data.title !== ''){
-            contract.data.title = LZUTF8.decompress(contract.data.title, { inputEncoding: 'Base64' });
+        if(active_contracts.indexOf(contract.address) === -1){
+          let subjects = []
+          for(let j in contract.data.subjects){
+            subjects.push(contract.data.subjects[j].address)
           }
-          app.contracts.push(contract)
+          if(contract.data.creator === app.address || subjects.indexOf(app.address) !== -1){
+            if(contract.data.title !== undefined && contract.data.title !== ''){
+              contract.data.title = LZUTF8.decompress(contract.data.title, { inputEncoding: 'Base64' });
+            }
+            app.contracts.push(contract)
+          }
         }
       }
       app.isLogging = false

@@ -356,7 +356,6 @@
             })
           }else{
             app.$buefy.toast.open({
-              duration: 5000,
               message: `Uno o più indirizzi sono invalidi, controllare gli indirizzi Lyra dei soggetti`,
               type: 'is-danger'
             })
@@ -364,7 +363,6 @@
           }
         }else{
           app.$buefy.toast.open({
-            duration: 5000,
             message: `Inserire almeno due o più soggetti`,
             type: 'is-danger'
           })
@@ -461,7 +459,6 @@
         const app = this
         app.isLoading = true
         app.$buefy.toast.open({
-            duration: 1500,
             message: `Inizio a calcolare gli hash dei file`,
             type: 'is-info'
         })
@@ -472,7 +469,6 @@
         }
         app.isLoading = false
         app.$buefy.toast.open({
-            duration: 5000,
             message: `Calcolo hash completato`,
             type: 'is-success'
         })

@@ -88,7 +88,7 @@
             </b-tab-item>
 
             <b-tab-item label="Notifiche">
-              <h1>Notifiche</h1><br>
+              <h1>Notifiche</h1>
               <div v-if="notifications.length > 0">
                 <b-tabs v-model="activeNotification" :position="'is-left'" :animated="false" :type="'is-boxed'" vertical>
                   <b-tab-item v-for="(notification, index) in notifications" :label="'#' + (index + 1)" v-bind:key="notification.uuid">
@@ -137,7 +137,7 @@
             </b-tab-item>
 
             <b-tab-item label="Azioni">
-              <div v-if="subjects.indexOf(address) !== -1">
+              <div v-if="subjects.indexOf(address) !== -1 && !isArchived">
                 <h1>Notifica informazioni alle parti</h1>
                 <span>
                   Notificando le informazioni alle parti scriverai indelebilmente delle informazioni sul contratto. Questa operazione può essere utile nel caso vogliate comunicare alle parti qualcosa riguardante il contratto o notificare la risoluzione del contratto stesso. Puoi allegare testo, che rimarrà pubblico, oppure caricare uno o più file.
@@ -179,7 +179,7 @@
                 <b-button v-if="!isNotifying" type="is-primary" v-on:click="notifyToContract" size="is-large" style="width:100%!important">NOTIFICA</b-button>
                 <div v-if="isNotifying" style="text-align:center; padding: 20px;">Notifica in corso, si prega di attendere...</div>
               </div>
-              <div v-if="address === contract.data.creator">
+              <div v-if="address === contract.data.creator && !isArchived">
                 <hr>
                 <h1>Archivia contratto</h1>
                 <span style="color:#f00"><b>Attenzione</b>, archiviando il contratto non lo vedrete tra quelli attivi, ma non potrete cancellare lo storico dalla blockchain in quanto il registro è immutabile. Le firme dei soggetti non vengono eliminate, quindi si prega di stare ben attenti se il contratto ha valenza legale.</span><br><br>
@@ -187,6 +187,9 @@
                 <div v-if="isInvalidating === true">
                   Archivio il contratto si prega di attendere...
                 </div>
+              </div>
+              <div v-if="isArchived">
+                <h1>Contratto archiviato!</h1>
               </div>
             </b-tab-item>
           </b-tabs>
@@ -237,7 +240,8 @@
         plaintext_notify: '',
         dropFiles_notify: [],
         dropFiles_verify: [],
-        verified_attachments: []
+        verified_attachments: [],
+        isArchived: false
       }
     },
     async mounted() {
@@ -249,7 +253,16 @@
       app.address = SIDS[0]
       let identity = await app.scrypta.returnIdentity(app.address)
       app.wallet = identity
-      let contracts_data = await app.scrypta.post('/read', { protocol: 'DC://', address: app.$route.params.contract })
+      let check_archived = await app.scrypta.post('/read', { protocol: 'DC://', address: app.$route.params.contract})
+      let isArchived = true
+      for(let k in check_archived.data){
+        let contract = check_archived.data[k]
+        if(contract.data.contract !== undefined){
+          isArchived = false
+        }
+      }
+      app.isArchived = isArchived
+      let contracts_data = await app.scrypta.post('/read', { protocol: 'DC://', address: app.$route.params.contract, history: true })
       for(let k in contracts_data.data){
         let contract = contracts_data.data[k]
         if(contract.data.title !== undefined && contract.data.title !== ''){
@@ -263,7 +276,7 @@
           for(let j in contract.data.subjects){
             app.subjects.push(contract.data.subjects[j].address)
             app.identities[contract.data.subjects[j].address] = contract.data.subjects[j].address
-            let checkinteractions = await app.scrypta.post('/read', { protocol: 'DC://', address: contract.data.subjects[j].address})
+            let checkinteractions = await app.scrypta.post('/read', { protocol: 'DC://', address: contract.data.subjects[j].address, history: true})
             for(let jjj in checkinteractions.data){
               let interaction = checkinteractions.data[jjj]
               if(interaction.refID === 'SIGN:' + app.$route.params.contract){
@@ -421,11 +434,6 @@
       },
       async calculateHashes(){
         const app = this
-        app.$buefy.toast.open({
-            duration: 1500,
-            message: `Inizio a verificare i file`,
-            type: 'is-info'
-        })
         
         app.files = []
         app.verified = []
@@ -592,7 +600,6 @@
       async calculateHashesNotify(){
         const app = this
         app.$buefy.toast.open({
-            duration: 1500,
             message: `Inizio a calcolare gli hash dei file`,
             type: 'is-info'
         })
@@ -602,7 +609,6 @@
           await app.readAttachment(file)
         }
         app.$buefy.toast.open({
-            duration: 5000,
             message: `Calcolo hash completato`,
             type: 'is-success'
         })
@@ -674,7 +680,6 @@
           })
         }else{
           app.$buefy.toast.open({
-            duration: 5000,
             message: `Inserire almeno un testo o dei file`,
             type: 'is-danger'
           })
@@ -736,11 +741,6 @@
       },
       async verifyAttachments(notification){
         const app = this
-        app.$buefy.toast.open({
-            duration: 1500,
-            message: `Inizio a verificare i file`,
-            type: 'is-info'
-        })
         
         app.verified_attachments = []
 

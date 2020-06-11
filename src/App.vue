@@ -10,6 +10,8 @@
         <template slot="start">
           <b-navbar-item href="/#/">I miei contratti</b-navbar-item>
           <b-navbar-item href="/#/create">Crea contratto</b-navbar-item>
+          <b-navbar-item href="/#/archive">Archivio</b-navbar-item>
+          <b-navbar-item href="/#/search">Ricerca</b-navbar-item>
         </template>
 
         <template slot="end">
