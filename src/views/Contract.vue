@@ -90,6 +90,7 @@
             <b-tab-item label="Notifiche">
               <h1>Notifiche</h1>
               <div v-if="notifications.length > 0">
+                <br>
                 <b-tabs v-model="activeNotification" :position="'is-left'" :animated="false" :type="'is-boxed'" vertical>
                   <b-tab-item v-for="(notification, index) in notifications" :label="'#' + (index + 1)" v-bind:key="notification.uuid">
                     <h3 style="font-size:25px; padding:0 0 10px 0; margin-top:-20px; font-weight:bold">Notifica #{{activeNotification + 1}}</h3>

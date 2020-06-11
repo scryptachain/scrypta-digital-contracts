@@ -2,33 +2,35 @@
   <div class="home">
     <div class="main text-left">
       <div class="container">
-        <h1>I miei contratti</h1>
+        <h1>Dashboard</h1>
         <hr>
         <div v-if="contracts.length > 0">
           <div v-for="contract in contracts" v-bind:key="contract.data.hash">
-            <div v-if="contract.data.v === 1">
-              <a :href="'/#/contract/' + contract.address">
-                <div style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
-                  <v-gravatar :email="contract.address" style="float:left; height:55px; margin-right:10px;" />
-                  <strong v-if="contract.data.title">{{ contract.data.title }}</strong>
-                  <strong v-if="!contract.data.title">Nessun titolo</strong>
-                  <br><strong>Indirizzo:</strong> {{ contract.address }}
-                  <br><strong>Partecipanti:</strong> {{ contract.data.subjects.length }}
-                  <b-icon
-                      style="position:absolute; top:27px; right:30px"
-                      icon="arrow-right"
-                      size="is-medium">
-                  </b-icon>
-                </div>
-              </a>
-            </div>
+            <a :href="'/#/contract/' + contract.address">
+              <div style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+                <v-gravatar :email="contract.address" style="float:left; height:55px; margin-right:10px;" />
+                <strong v-if="contract.data.title">{{ contract.data.title }}</strong>
+                <strong v-if="!contract.data.title">Nessun titolo</strong>
+                <br><strong>Indirizzo:</strong> {{ contract.address }}
+                <br><strong>Partecipanti:</strong> {{ contract.data.subjects.length }}
+                <b-icon
+                    style="position:absolute; top:27px; right:30px"
+                    icon="arrow-right"
+                    size="is-medium">
+                </b-icon>
+              </div>
+            </a>
           </div>
         </div>
         <div v-if="isLoading === true">
           Cerco i tuoi contratti in blockchain...
         </div>
         <div v-if="contracts.length === 0 && isLoading === false">
-          Nessun contratto da mostrare...
+          Non hai ancora creato nessun contratto digitale!<br>
+          Grazie al digital contract è possibile realizzare contratti registrati all'interno della blockchain di Scrypta. Questi contratti sono firmati da indirizzi di persone fisiche o giuridiche riconosciute dalle parti e la cui identità può essere verificata grazie a <a href="https://scrypta.id" target="_blank">https://scrypta.id</a>.<br><br>
+          <a href="/#/create">
+          <b-button type="is-primary">CREA IL TUO PRIMO CONTRATTO</b-button>
+          </a>
         </div>
       </div>
     </div>
@@ -65,11 +67,13 @@
         for(let j in contract.data.subjects){
           subjects.push(contract.data.subjects[j].address)
         }
-        if(contract.data.creator === app.address || subjects.indexOf(app.address) !== -1){
-          if(contract.data.title !== undefined && contract.data.title !== ''){
-            contract.data.title = LZUTF8.decompress(contract.data.title, { inputEncoding: 'Base64' });
+        if(contract.data.v !== undefined && contract.data.v === 1){
+          if(contract.data.creator === app.address || subjects.indexOf(app.address) !== -1){
+            if(contract.data.title !== undefined && contract.data.title !== ''){
+              contract.data.title = LZUTF8.decompress(contract.data.title, { inputEncoding: 'Base64' });
+            }
+            app.contracts.push(contract)
           }
-          app.contracts.push(contract)
         }
       }
       app.isLogging = false
