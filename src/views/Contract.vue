@@ -21,32 +21,25 @@
                 </a>
               </h1>
               <div v-for="(key, index) in contract.data.subjects" v-bind:key="index" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px; position:relative">
-                <v-gravatar :email="key.address" style="float:left; height:70px; margin-right:10px;" />
+                <v-gravatar :email="key.address" style="float:left; height:55px; margin-right:10px;" />
                 Soggetto #{{index}}<br>
                 <div v-if="key.identity.name === undefined || key.identity.surname === undefined" style="color:#f00">Nome da decriptare</div>
                 <div v-if="key.identity.name !== undefined && key.identity.surname !== undefined"><strong>{{ key.identity.name }} {{ key.identity.surname }}</strong></div>
                 <span v-if="key.address.length === 34">{{ key.address }}</span>
                 <br>
-                <span v-if="signs.indexOf(key.address) === -1" style="color:#f00">Firma non apposta</span>
-                <span v-if="signs.indexOf(key.address) !== -1 && signsdetails[key.address].block" style="color:green">Firmato al blocco {{ signsdetails[key.address].block }}</span>
-                <span v-if="signs.indexOf(key.address) !== -1 && !signsdetails[key.address].block" style="color:green">Firmato, ma in attesa di conferma</span>
                 <a :href="'https://me.scrypta.id/#/search/' + key.address" target="_blank">
                   <b-icon
-                      style="position:absolute; top:37px; right:30px"
+                      style="position:absolute; top:25px; right:30px"
                       icon="account-box"
                       size="is-medium">
                   </b-icon>
                 </a>
               </div>
-              <div class="columns">
-                <div class="column" v-if="signs.indexOf(address) === -1 && subjects.indexOf(address) !== -1">
-                  <b-button type="is-primary" v-if="!isSigning" v-on:click="signContract" size="is-large" style="width:100%!important">FIRMA CONTRATTO</b-button>
-                  <span v-if="isSigning" style="padding:10px; text-align:center">Firmo il contratto...</span>
-                </div>
+              <div v-if="contract.data.object !== ''">
+                <hr>
+                <h1>Oggetto</h1><br>
+                <div v-html="contract.data.object"></div>
               </div>
-              <hr>
-              <h1>Oggetto</h1><br>
-              <div v-if="contract.data.object !== ''" v-html="contract.data.object"></div>
               <div v-if="contract.data.attachments.length > 0">
                 <hr>
                 <div class="columns">
@@ -84,6 +77,18 @@
                     </div>
                   </div>
                 </div>
+              </div>
+            </b-tab-item>
+
+            <b-tab-item label="Firme">
+              <h1>Firme</h1>
+              <div v-for="(key, index) in contract.data.subjects" v-bind:key="index" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px; position:relative">
+                <v-gravatar :email="key.address" style="float:left; height:55px; margin-right:10px;" />
+                <span v-if="!isDecrypted">Soggetto #{{index}}</span>
+                <span v-if="key.identity.name !== undefined && key.identity.surname !== undefined"><strong>{{ key.identity.name }} {{ key.identity.surname }}</strong></span>
+                <span v-if="isDecrypted"></span><br>
+                N. Firme apposte: 0 / <span v-if="contract.data.signs !== undefined && contract.data.signs.length > 0">{{ contract.data.signs.length }}</span><span v-if="contract.data.signs === undefined || contract.data.signs.length === 0">1</span><br>
+                <span style="color:#f00">Il soggetto non ha firmato il contratto.</span>
               </div>
             </b-tab-item>
 
@@ -137,8 +142,25 @@
               </div>
             </b-tab-item>
 
-            <b-tab-item label="Azioni">
-              <div v-if="subjects.indexOf(address) !== -1 && !isArchived">
+            <b-tab-item label="Azioni" v-if="(subjects.indexOf(address) !== -1 || contract.data.creator) && !isArchived">
+                <div v-if="subjects.indexOf(address) !== -1">
+                  <h1>Firma il contratto</h1>
+                  <div v-if="contract.data.signs.length > 0">
+                    <div v-for="sign in contract.data.signs" v-bind:key="sign.number" style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+                        <strong>Clausola #{{ sign.number }}</strong><br>
+                        <strong>Obbligatoria:</strong> <span v-if="sign.required === true">SI</span><span v-if="sign.required === 'false'">NO</span>
+                        <b-button v-on:click="signContract(sign.number)" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
+                    </div>
+                  </div>
+
+                  <div class="columns" v-if="contract.data.signs.length === 0 || (signs[address] !== undefined && signs[address].length === contract.data.signs.length)">
+                    <div class="column">
+                      <b-button type="is-primary" v-if="!isSigning" v-on:click="signContract" size="is-large" style="width:100%!important">FIRMA GENERALE CONTRATTO</b-button>
+                      <span v-if="isSigning" style="padding:10px; text-align:center">Firmo il contratto...</span>
+                    </div>
+                  </div>
+                  <hr>
+                </div>
                 <h1>Notifica informazioni alle parti</h1>
                 <span>
                   Notificando le informazioni alle parti scriverai indelebilmente delle informazioni sul contratto. Questa operazione può essere utile nel caso vogliate comunicare alle parti qualcosa riguardante il contratto o notificare la risoluzione del contratto stesso. Puoi allegare testo, che rimarrà pubblico, oppure caricare uno o più file.
@@ -176,11 +198,10 @@
                       </a>
                   </div>
                   <br><br>
-                </div>
                 <b-button v-if="!isNotifying" type="is-primary" v-on:click="notifyToContract" size="is-large" style="width:100%!important">NOTIFICA</b-button>
                 <div v-if="isNotifying" style="text-align:center; padding: 20px;">Notifica in corso, si prega di attendere...</div>
               </div>
-              <div v-if="address === contract.data.creator && !isArchived">
+              <div v-if="address === contract.data.creator">
                 <hr>
                 <h1>Archivia contratto</h1>
                 <span style="color:#f00"><b>Attenzione</b>, archiviando il contratto non lo vedrete tra quelli attivi, ma non potrete cancellare lo storico dalla blockchain in quanto il registro è immutabile. Le firme dei soggetti non vengono eliminate, quindi si prega di stare ben attenti se il contratto ha valenza legale.</span><br><br>
@@ -188,9 +209,6 @@
                 <div v-if="isInvalidating === true">
                   Archivio il contratto si prega di attendere...
                 </div>
-              </div>
-              <div v-if="isArchived">
-                <h1>Contratto archiviato!</h1>
               </div>
             </b-tab-item>
           </b-tabs>
@@ -388,7 +406,7 @@
               if (key !== false) {
                 for(let j in app.contract.data.subjects){
                   app.contract.data.subjects[j].identity = await app.scrypta.decryptData(app.contract.data.subjects[j].identity, key.prv)
-                  app.contract.data.subjects[j].identity = JSON.parse(JSON.parse(app.contract.data.subjects[j].identity))
+                  app.contract.data.subjects[j].identity = JSON.parse(app.contract.data.subjects[j].identity)
                   app.identities[app.contract.data.subjects[j].address] = app.contract.data.subjects[j].identity['name'] + ' ' + app.contract.data.subjects[j].identity['surname']
                 }
                 app.isDecrypted = true

@@ -5,11 +5,11 @@
         <h1>Entra all'interno del contratto<br><span style="font-size:16px">{{ $route.params.address }}</span></h1>
         <hr>
         <div v-if="!isBroadcasting">
-          <b-field label="Nome">
-            <b-input v-model="nome"></b-input>
+          <b-field label="Il tuo nome">
+            <b-input v-model="name"></b-input>
           </b-field>
-          <b-field label="Cognome">
-            <b-input v-model="cognome"></b-input>
+          <b-field label="Il tuo cognome">
+            <b-input v-model="surname"></b-input>
           </b-field>
           <b-button type="is-primary" size="is-large" style="width:100%" v-on:click="sendContactstoContract">INVIA LE INFORMAZIONI AL CONTRATTO</b-button>
         </div>
@@ -33,8 +33,8 @@
         wallet: '',
         isLoading: true,
         isBroadcasting: false,
-        nome: '',
-        cognome: ''
+        name: '',
+        surname: ''
       }
     },
     async mounted() {
@@ -51,7 +51,7 @@
       sendContactstoContract(){
         const app = this
         app.scrypta.connectP2P()
-        if(app.nome !== '' && app.cognome !== ''){
+        if(app.name !== '' && app.surname !== ''){
           app.$buefy.dialog.prompt({
             message: `Inserisci la password del wallet`,
             inputAttrs: {
@@ -63,7 +63,7 @@
               if (key !== false) {
                 app.isBroadcasting = true
                 setInterval(async function(){
-                  app.scrypta.broadcast(app.wallet.wallet, password, 'message', JSON.stringify({action: 'join', nome: app.nome, cognome: app.cognome, contract: app.$route.params.address, time: new Date()}))
+                  app.scrypta.broadcast(app.wallet.wallet, password, 'message', JSON.stringify({action: 'join', name: app.name, surname: app.surname, contract: app.$route.params.address, time: new Date()}))
                 },3000)
               } else {
                 app.$buefy.toast.open({
@@ -75,7 +75,7 @@
           })
         }else{
           app.$buefy.toast.open({
-              message: `Inserisci nome e cognome prima di inviare le informazioni al contratto`,
+              message: `Inserisci name e surname prima di inviare le informazioni al contratto`,
               type: 'is-danger'
           })
         }

@@ -10,7 +10,7 @@
                 Soggetti
                 <b-button type="is-primary" style="float:right" v-on:click="addSubject"><b-icon icon="plus"></b-icon></b-button>
               </h1>
-              <br>
+              <hr>
               <div v-for="(key, index) in subjects" v-bind:key="index">
                 <div class="columns" style="position:relative">
                   <div class="column">
@@ -46,6 +46,7 @@
 
             <b-tab-item label="Oggetto">
               <h1>Inserisci informazioni pubbliche</h1>
+              <hr>
               <b-field :label="'Titolo'">
                 <b-input v-model="title"></b-input>
               </b-field>
@@ -88,22 +89,67 @@
               </div>
               <hr>
               <b-button type="is-primary" style="float:left" v-on:click="showSubjects()">INDIETRO</b-button>
+              <b-button type="is-primary" v-if="subjects.length >= 2 && (plaintext !== '' || files.length > 0)" style="float:right" v-on:click="showSigns()">AVANTI</b-button>
+            </b-tab-item>
+
+            <b-tab-item label="Firme">
+              <h1>
+                Firme aggiuntive
+                <b-button type="is-primary" style="float:right" v-on:click="addSign"><b-icon icon="plus"></b-icon></b-button>
+              </h1>
+              <hr>
+              <div v-for="(key, index) in signs" v-bind:key="index">
+                <div class="columns" style="position:relative">
+                  <div class="column">
+                    <b-field :label="'N. Clausola'">
+                      <b-input v-model="signs[index].number"></b-input>
+                    </b-field>
+                  </div>
+                  <div class="column">
+                    <b-field label="Richiesta" style="margin-right:23px">
+                      <b-select placeholder="Scegli se richiesta o meno" v-model="signs[index].required">
+                          <option value="false">NON OBBLIGATORIA</option>
+                          <option value="true">OBBLIGATORIA</option>
+                      </b-select>
+                    </b-field>
+                  </div>
+                  <b-button type="is-primary" style="position:absolute; top: 44px; right:0" v-on:click="deleteSign(index)"><b-icon icon="backspace"></b-icon></b-button>
+                </div>
+              </div>
+              <div v-if="signs.length === 0">
+                <h2>In questa sezione dovrai inserire tutte le firme, a parte quella generale, richieste per l'accettazione del contratto.<br>
+                Potrai numerarle e collegarle al tuo documento privato o all'oggetto pubblico.
+                <br><br>
+                </h2>
+              </div>
+              <hr>
               <b-button type="is-primary" v-if="subjects.length >= 2 && (plaintext !== '' || files.length > 0)" style="float:right" v-on:click="showConfirm()">AVANTI</b-button>
             </b-tab-item>
+
             <b-tab-item label="Conferma" v-if="subjects.length >= 2 && (plaintext !== '' || files.length > 0)">
               <h1>Conferma tutti i dati e crea il contratto</h1>
+              <hr>
               <h3 style="font-size:20px; font-weight:bold">Soggetti</h3>
-              <div v-for="(key, index) in subjects" v-bind:key="index" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+              <div v-for="(key, index) in subjects" v-bind:key="index" style="border:1px solid #ccc; position:relative; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                 <v-gravatar :email="key.address" style="float:left; height:55px; margin-right:10px;" />
                 Soggetto #{{index}}<br>
                 <span v-if="key.name === '' || key.surname === ''" style="color:#f00">Nome non valido</span>
                 <strong>{{ key.name }} {{ key.surname }}</strong><br>
                 <span v-if="key.address.length === 34">{{ key.address }}</span>
                 <span v-if="key.address.length !== 34" style="color:#f00">Indirizzo non valido</span>
+                <a :href="'https://me.scrypta.id/#/search/' + key.address" target="_blank">
+                  <b-icon
+                      style="position:absolute; top:25px; right:30px"
+                      icon="account-box"
+                      size="is-medium">
+                  </b-icon>
+                </a>
               </div>
-              <hr>
-              <h3 style="font-size:20px; font-weight:bold">Oggetto</h3><br>
-              <div v-if="plaintext !== ''" v-html="plaintext"></div>
+              <div v-if="plaintext !== ''">
+                <hr>
+                <h3 style="font-size:20px; font-weight:bold">Oggetto</h3><br>
+                <div v-html="plaintext"></div>
+              </div>
               <div v-if="files.length > 0">
                 <hr>
                 <h3 style="font-size:20px; font-weight:bold">Allegati</h3>
@@ -114,8 +160,16 @@
                     <strong>Hash file:</strong> {{ file.hash }}
                 </div>
               </div>
+              <div v-if="signs.length > 0">
+                <hr>
+                <h3 style="font-size:20px; font-weight:bold">Firme aggiuntive</h3>
+                <div v-for="sign in signs" v-bind:key="sign.number" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+                    <strong>Clausola #{{ sign.number }}</strong><br>
+                    <strong>Obbligatoria:</strong> <span v-if="sign.required === true">SI</span><span v-if="sign.required === 'false'">NO</span><br>
+                </div>
+              </div>
               <hr>
-              <b-button type="is-primary" style="float:left" v-on:click="showObject()">INDIETRO</b-button>
+              <b-button type="is-primary" style="float:left" v-on:click="showSigns()">INDIETRO</b-button>
               <b-button type="is-primary" style="float:right" v-on:click="createContract()">CREA CONTRATTO</b-button>
             </b-tab-item>
         </b-tabs>
@@ -155,6 +209,7 @@
         },
         files: [],
         subjects: [],
+        signs: [],
         dropFiles: [],
         title: '',
         plaintext: '',
@@ -287,8 +342,10 @@
                       address: trustlink.data.address,
                       subjects: subjectsToStore,
                       object: objectToStore,
-                      attachments: app.files
+                      attachments: app.files,
+                      signs: app.signs
                     }
+
                     let contracthash = crypto.createHash("sha256").update(JSON.stringify(digitalcontract)).digest("hex")
                     digitalcontract['hash'] = contracthash
                     let length = JSON.stringify(digitalcontract).length
@@ -377,9 +434,13 @@
         const app = this
         app.activeTab = 1
       },
-      showConfirm(){
+      showSigns(){
         const app = this
         app.activeTab = 2
+      },
+      showConfirm(){
+        const app = this
+        app.activeTab = 3
       },
       addSubject(){
         const app = this
@@ -396,6 +457,23 @@
         for(let k in temp){
           if(parseFloat(k) !== parseFloat(index)){
             app.subjects.push(temp[k])
+          }
+        }
+      },
+      addSign(){
+        const app = this
+        app.signs.push({
+          number: "",
+          required: true
+        })
+      },
+      deleteSign(index){
+        const app = this
+        let temp = app.signs
+        app.signs = []
+        for(let k in temp){
+          if(parseFloat(k) !== parseFloat(index)){
+            app.signs.push(temp[k])
           }
         }
       },
