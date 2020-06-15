@@ -327,7 +327,7 @@
       app.isLoading = false
     },
     methods: {
-      async signContract(){
+      async signContract(number){
         const app = this
         if(app.subjects.indexOf(app.address) !== -1){
           if(app.signs.indexOf(app.address) === -1){
@@ -343,7 +343,7 @@
                   let key = await app.scrypta.readKey(password, app.wallet.wallet);
                   if (key !== false) {
                     app.isSigning = true
-                    let sign = await app.writeSign(key, password)
+                    let sign = await app.writeSign(key, password, number)
                     if(sign !== false){
                       app.signs.push(app.address)
                     }
@@ -462,16 +462,23 @@
           await app.readFile(file)
         }
       },
-      writeSign(key, password){
+      writeSign(key, password, number){
         const app = this
         return new Promise(async response => {
           let balance = await app.scrypta.get('/balance/' + app.wallet.address)
           if(balance.balance >= 0.0011){
+            let signed = 'SIGN:' + app.$route.params.contract
+            if(number !== undefined && number > 0 && !isNaN(number)){
+              signed = 'SIGN:' + number + ':' + app.$route.params.contract
+            }
+            
             let sign = await app.scrypta.signMessage(key.prv, JSON.stringify({
               timestamp: new Date().getTime(),
-              contract: app.$route.params.contract
+              contract: app.$route.params.contract,
+              signed: signed
             }))
-            let written = await app.scrypta.write(app.wallet.wallet, password, JSON.stringify(sign), '', 'SIGN:' + app.$route.params.contract, 'DC://')
+
+            let written = await app.scrypta.write(app.wallet.wallet, password, JSON.stringify(sign), '', signed, 'DC://')
             if (written.txs.length >= 1 && written.txs[0] !== null) {
               response(true)
             }else{
