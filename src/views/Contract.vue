@@ -167,7 +167,7 @@
                   <div style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                         <strong>Firma generale contratto</strong><br>
                         <strong>Obbligatoria:</strong> SI
-                        <b-button v-if="Object.keys(signs[address]).length === (signsdetails['required'].length - 1) && signs[address]['general'] === undefined && !isSigning" v-on:click="signContract('general')" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
+                        <b-button v-if="Object.keys(signs[address]).length >= (signsdetails['required'].length - 1) && signs[address]['general'] === undefined && !isSigning" v-on:click="signContract('general')" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
                         <div v-if="Object.keys(signs[address]).length < (signsdetails['required'].length - 1)">Firma tutte le clausole obbligatorie prima</div>
                         <div v-if="signs[address]['general'] !== undefined" style="color:green">Hai già firmato il contratto</div>
                     </div>
