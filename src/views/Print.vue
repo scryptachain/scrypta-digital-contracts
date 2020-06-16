@@ -2,19 +2,27 @@
   <div class="home">
     <div class="main text-left">
       <div class="container">
-        <v-gravatar :email="$route.params.contract" style="float:left; height:70px; margin-right:20px;" />
+        <div class="show-print" style="text-align:center">
+          <img src="/logo.png" width="60"/><br>
+          <h3 style="font-size:20px">Scrypta Digital Contract</h3>
+          <hr>
+        </div>
         <h1 v-if="!contract.data.title">Dettagli Digital Contract</h1>
         <h1 v-if="contract.data.title">{{ contract.data.title }}</h1>
-        {{ $route.params.contract }}
-        <a :href="'https://proof.scryptachain.org/#/uuid/' + contract.uuid" target="_blank" style="float:right"><b-icon icon="export" ></b-icon></a>
-        <a :href="'/#/print/' + $route.params.contract" style="float:right; margin-right:10px;"><b-icon icon="printer" ></b-icon></a>
+        <a href="#" class="hide-print" onclick="window.print()" style="float:right"><b-icon icon="printer"></b-icon></a>
+        <div style="font-size:14px">
+          Timestamp contratto: {{ contract.date }}<br>
+          Identificativo contratto: {{ $route.params.contract }}<br>
+          Creato dall'indirizzo: {{ contract.data.creator }}<br>
+          Notarizzato al blocco: {{ contract.block }}
+        </div>
         <hr>
         <div v-if="isLoading === false">
-          <b-tabs :animated="false" v-model="activeTab">
-            <b-tab-item label="Contratto">
-              <h1>
+          <div :animated="false">
+            <div label="Contratto">
+              <h1 style="position:relative">
                 Soggetti
-                <a href="#" v-on:click="decryptData">
+                <a href="#" class="hide-print" v-on:click="decryptData">
                   <b-icon
                       v-if="address === contract.data.creator && !isDecrypted"
                       style="position:absolute; top:25px; right:20px; cursor:pointer"
@@ -47,7 +55,7 @@
                 <div class="columns">
                   <div class="column">
                     <h1>Allegati del contratto</h1>
-                    <div v-for="file in contract.data.attachments" v-bind:key="file.hash" style="border:1px solid #ccc; position:relative; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+                    <div v-for="file in contract.data.attachments" class="no-cut" v-bind:key="file.hash" style="border:1px solid #ccc; position:relative; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                         <v-gravatar :email="file.hash" style="float:left; height:55px; margin-right:10px;" />
                         <strong>{{ file.filename }}</strong><br>
                         <strong v-if="file.type">{{ file.type }} - </strong><strong>{{ file.size }} Byte</strong><br>
@@ -57,34 +65,16 @@
                             style="position:absolute; top:30px; right:30px; color: green"
                             icon="checkbox-marked-circle">
                         </b-icon>
-                    </div><hr>
-                    <h3 style="font-size:20px; font-weight:bold">Verifica allegati</h3><br>
-                    <b-field>
-                        <b-upload v-on:input="calculateHashes" v-model="dropFiles" multiple drag-drop>
-                            <section class="section">
-                                <div class="content has-text-centered" style="width:100%">
-                                    <p>
-                                        <b-icon
-                                            icon="upload"
-                                            size="is-large">
-                                        </b-icon>
-                                    </p>
-                                    <p>Verifica i file trascinandoli o cliccando qui.</p>
-                                </div>
-                            </section>
-                        </b-upload>
-                    </b-field>
-                    <div v-if="verified.length === contract.data.attachments.length">
-                      <h1 style="width:100%; text-align:center">Tutti i file sono stati verificati!</h1>
                     </div>
                   </div>
                 </div>
               </div>
-            </b-tab-item>
+            </div>
 
-            <b-tab-item label="Firme">
+            <div label="Firme">
+              <hr>
               <h1>Firme</h1>
-              <div v-for="(key, index) in contract.data.subjects" v-bind:key="index" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px; position:relative">
+              <div v-for="(key, index) in contract.data.subjects" class="no-cut" v-bind:key="index" style="border:1px solid #ccc; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px; position:relative">
                 <v-gravatar :email="key.address" style="float:left; height:55px; margin-right:10px;" />
                 <span v-if="!isDecrypted">Soggetto #{{index}}</span>
                 <span v-if="key.identity.name !== undefined && key.identity.surname !== undefined"><strong>{{ key.identity.name }} {{ key.identity.surname }}</strong></span>
@@ -101,15 +91,15 @@
                   </div>
                 </div>
               </div>
-            </b-tab-item>
+            </div>
 
-            <b-tab-item label="Notifiche">
-              <h1>Notifiche</h1>
+            <div label="Notifiche">
+              <hr>
               <div v-if="notifications.length > 0">
                 <br>
-                <b-tabs v-model="activeNotification" :position="'is-left'" :animated="false" :type="'is-boxed'" vertical>
-                  <b-tab-item v-for="(notification, index) in notifications" :label="'#' + (index + 1)" v-bind:key="notification.uuid">
-                    <h3 style="font-size:25px; padding:0 0 10px 0; margin-top:-20px; font-weight:bold">Notifica #{{activeNotification + 1}} | <a :href="'https://proof.scryptachain.org/#/uuid/' + notification.uuid" target="_blank"><b-icon icon="export" ></b-icon></a></h3>
+                <div>
+                  <div v-for="(notification, index) in notifications" :label="'#' + (index + 1)" v-bind:key="notification.uuid">
+                    <h3 style="font-size:25px; padding:0 0 10px 0; margin-top:5px; font-weight:bold">Notifica #{{index + 1}}</h3>
                     Scritta in blockchain da <strong>{{ identities[notification.address] }}</strong> e notarizzata al blocco <strong>{{ notification.block }}</strong><br>
                     Timestamp notifica: {{ notification.data.message.timestamp }}
                     <hr>
@@ -122,108 +112,15 @@
                           <strong>{{ file.filename }}</strong><br>
                           <strong v-if="file.type">{{ file.type }} - </strong><strong>{{ file.size }} Byte</strong><br>
                           <strong>Hash file:</strong> {{ file.hash }}
-                          <b-icon
-                              v-if="verified_attachments.indexOf(file.hash) !== -1"
-                              style="position:absolute; top:30px; right:30px; color: green"
-                              icon="checkbox-marked-circle">
-                          </b-icon>
-                      </div><hr>
-                      <h3 style="font-size:20px; font-weight:bold">Verifica allegati</h3><br>
-                      <b-field>
-                          <b-upload v-on:input="verifyAttachments(notification)" v-model="dropFiles_verify" multiple drag-drop>
-                              <section class="section">
-                                  <div class="content has-text-centered" style="width:100%">
-                                      <p>
-                                          <b-icon
-                                              icon="upload"
-                                              size="is-large">
-                                          </b-icon>
-                                      </p>
-                                      <p>Verifica i file trascinandoli o cliccando qui.</p>
-                                  </div>
-                              </section>
-                          </b-upload>
-                      </b-field>
+                      </div>
                     </div>
-                  </b-tab-item>
-                </b-tabs>
-              </div>
-              <div v-if="notifications.length === 0">
-                <br>Nessuno ha ancora notificato informazioni.
-              </div>
-            </b-tab-item>
-
-            <b-tab-item label="Azioni" v-if="(subjects.indexOf(address) !== -1 || contract.data.creator) && !isArchived">
-                <div v-if="subjects.indexOf(address) !== -1">
-                  <h1>Firma il contratto</h1>
-                  <div v-if="contract.data.signs.length > 0">
-                    <div v-for="sign in contract.data.signs" v-bind:key="sign.number" style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
-                        <strong>Clausola #{{ sign.number }}</strong><br>
-                        <strong>Obbligatoria:</strong> <span v-if="sign.required === true">SI</span><span v-if="sign.required === 'false'">NO</span>
-                        <b-button v-if="signs[address][sign.number] === undefined && !isSigning" v-on:click="signContract(sign.number)" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
-                        <div v-if="signs[address][sign.number] !== undefined" style="color:green">Hai già firmato la clausola</div>
-                    </div>
+                    <hr>
                   </div>
-                  <div style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
-                        <strong>Firma generale contratto</strong><br>
-                        <strong>Obbligatoria:</strong> SI
-                        <b-button v-if="Object.keys(signs[address]).length === (signsdetails['required'].length - 1) && signs[address]['general'] === undefined && !isSigning" v-on:click="signContract('general')" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
-                        <div v-if="Object.keys(signs[address]).length < (signsdetails['required'].length - 1)">Firma tutte le clausole obbligatorie prima</div>
-                        <div v-if="signs[address]['general'] !== undefined" style="color:green">Hai già firmato il contratto</div>
-                    </div>
-                  <hr>
-                </div>
-                <h1>Notifica informazioni alle parti</h1>
-                <span>
-                  Notificando le informazioni alle parti scriverai indelebilmente delle informazioni sul contratto. Questa operazione può essere utile nel caso vogliate comunicare alle parti qualcosa riguardante il contratto o notificare la risoluzione del contratto stesso. Puoi allegare testo, che rimarrà pubblico, oppure caricare uno o più file.
-                </span>
-                <hr>
-                <vue-editor v-model="plaintext_notify" />
-                <hr>
-                <b-field>
-                    <b-upload v-on:input="calculateHashesNotify" v-model="dropFiles_notify" multiple drag-drop>
-                        <section class="section">
-                            <div class="content has-text-centered" style="width:100%">
-                                <p>
-                                    <b-icon
-                                        icon="upload"
-                                        size="is-large">
-                                    </b-icon>
-                                </p>
-                                <p>Allega dei file trascinandoli o cliccando qui.</p>
-                            </div>
-                        </section>
-                    </b-upload>
-                </b-field>
-
-                <div v-if="attachments_notify.length > 0">
-                  <div v-for="(file, index) in attachments_notify" v-bind:key="file.hash" style="border:1px solid #ccc; position:relative; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
-                      <v-gravatar :email="file.hash" style="float:left; height:55px; margin-right:10px;" />
-                      <strong>{{ file.filename }}</strong><br>
-                      <strong v-if="file.type">{{ file.type }} - </strong><strong>{{ file.size }} Byte</strong><br>
-                      <strong>Hash file:</strong> {{ file.hash }}
-                      <a v-on:click="deleteDropFile(index)">
-                        <b-icon
-                            style="position:absolute; top:30px; right:20px; cursor:pointer"
-                            icon="backspace">
-                        </b-icon>
-                      </a>
-                  </div>
-                  <br><br>
-                <b-button v-if="!isNotifying" type="is-primary" v-on:click="notifyToContract" size="is-large" style="width:100%!important">NOTIFICA</b-button>
-                <div v-if="isNotifying" style="text-align:center; padding: 20px;">Notifica in corso, si prega di attendere...</div>
-              </div>
-              <div v-if="address === contract.data.creator">
-                <hr>
-                <h1>Archivia contratto</h1>
-                <span style="color:#f00"><b>Attenzione</b>, archiviando il contratto non lo vedrete tra quelli attivi, ma non potrete cancellare lo storico dalla blockchain in quanto il registro è immutabile. Le firme dei soggetti non vengono eliminate, quindi si prega di stare ben attenti se il contratto ha valenza legale.</span><br><br>
-                <b-button v-if="!isInvalidating" type="is-primary" v-on:click="invalidateContract" size="is-large" style="width:100%!important">ARCHIVIA ORA</b-button>
-                <div v-if="isInvalidating === true">
-                  Archivio il contratto si prega di attendere...
                 </div>
               </div>
-            </b-tab-item>
-          </b-tabs>
+            </div>
+
+          </div>
 
         </div>
         <div v-if="isLoading === true">
@@ -306,6 +203,7 @@
           contract.data.object = LZUTF8.decompress(contract.data.object, { inputEncoding: 'Base64' });
         }
         if(contract.data.contract !== undefined){
+          contract.date = new Date(contract.time * 1000)
           app.contract = contract
           for(let y in contract.data.signs){
             if(contract.data.signs[y].required === true){

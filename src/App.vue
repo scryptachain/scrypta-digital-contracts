@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div v-if="!isLogging && wallet && backup">
-      <b-navbar>
+      <b-navbar class="hide-print">
         <template slot="brand">
           <b-navbar-item tag="router-link" :to="{ path: '/' }">
             <img src="/logo.png" />
@@ -26,14 +26,16 @@
         </template>
       </b-navbar>
       <router-view />
-      <hr />Scrypta Digital Contracts is
-      <a
-        href="https://github.com/scryptachain/scrypta-digital-contracts"
-        target="_blank"
-      >open-source</a> project by
-      <a href="https://scrypta.foundation" target="_blank">Scrypta Foundation</a>.
-      <br />
-      <br />
+      <div class="hide-print">
+        <hr />Scrypta Digital Contracts is
+        <a
+          href="https://github.com/scryptachain/scrypta-digital-contracts"
+          target="_blank"
+        >open-source</a> project by
+        <a href="https://scrypta.foundation" target="_blank">Scrypta Foundation</a>.
+        <br />
+        <br />
+      </div>
     </div>
 
     <div v-if="!isLogging && wallet && !backup">
@@ -293,6 +295,20 @@ export default {
 </script>
 
 <style>
+  .show-print{
+    display: none;
+  }
+  @media print {
+    .hide-print{
+      display:none!important;
+    }
+    .show-print{
+      display:block!important;
+    }
+    .no-cut{
+        page-break-inside: avoid;
+    }
+  }
   #app {
     font-family: "Sen";
     -webkit-font-smoothing: antialiased;
