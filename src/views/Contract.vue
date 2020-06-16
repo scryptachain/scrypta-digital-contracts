@@ -89,15 +89,17 @@
                 <span v-if="!isDecrypted">Soggetto #{{index}}</span>
                 <span v-if="key.identity.name !== undefined && key.identity.surname !== undefined"><strong>{{ key.identity.name }} {{ key.identity.surname }}</strong></span>
                 <span v-if="isDecrypted"></span><br>
-                N. Firme apposte: {{ Object.keys(signs[key.address]).length }} / {{ signsdetails['required'].length }}
-                <div v-if="Object.keys(signs[key.address]).length < signsdetails['required'].length" style="color:#f00">Il soggetto non ha firmato il contratto.</div>
-                <div v-if="Object.keys(signs[key.address]).length === signsdetails['required'].length" style="color:green">Il soggetto ha firmato il contratto.</div>
-                <div v-if="Object.keys(signs[key.address]).length > 0">
+                N. Firme obbligatorie: {{ Object.keys(signs[key.address]['required']).length }} / {{ signsdetails['required'].length }}<br>
+                N. Firme opzionali: {{ Object.keys(signs[key.address]['optional']).length }} / {{ signsdetails['optional'].length }}<br>
+                <div v-if="Object.keys(signs[key.address]['required']).length === signsdetails['required'].length" style="color:green">Il soggetto ha firmato il contratto.</div>
+                <div v-if="Object.keys(signs[key.address]['required']).length > 0 || Object.keys(signs[key.address]['optional']).length > 0">
                   <hr>
                   <strong>Dettaglio firme</strong>
                   <div v-for="(sign, index) in signs[key.address]" v-bind:key="sign._id" class="small-icons">
-                    <div v-if="index !== 'general'">Clausola #{{index}} <span v-if="sign.block > 0">firmata al blocco {{ sign.block }}</span><span v-if="!sign.block">in attesa di conferma</span> | {{ sign.date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + sign.uuid" target="_blank"><b-icon icon="export" ></b-icon></a></div>
-                    <div v-if="index === 'general'">Contratto <span v-if="sign.block > 0">firmato al blocco {{ sign.block }}</span><span v-if="!sign.block">in attesa di conferma</span> | {{ sign.date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + sign.uuid" target="_blank"><b-icon icon="export" ></b-icon></a></div>
+                    <div v-if="index !== 'optional' && index !== 'required'">
+                      <div v-if="index !== 'general'">Clausola #{{index}} <span v-if="sign.block > 0">firmata al blocco {{ sign.block }}</span><span v-if="!sign.block">in attesa di conferma</span> | {{ sign.date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + sign.uuid" target="_blank"><b-icon icon="export" ></b-icon></a></div>
+                      <div v-if="index === 'general'">Contratto <span v-if="sign.block > 0">firmato al blocco {{ sign.block }}</span><span v-if="!sign.block">in attesa di conferma</span> | {{ sign.date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + sign.uuid" target="_blank"><b-icon icon="export" ></b-icon></a></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -167,8 +169,8 @@
                   <div style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                         <strong>Firma generale contratto</strong><br>
                         <strong>Obbligatoria:</strong> SI
-                        <b-button v-if="Object.keys(signs[address]).length >= (signsdetails['required'].length - 1) && signs[address]['general'] === undefined && !isSigning" v-on:click="signContract('general')" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
-                        <div v-if="Object.keys(signs[address]).length < (signsdetails['required'].length - 1)">Firma tutte le clausole obbligatorie prima</div>
+                        <b-button v-if="Object.keys(signs[address]['required']).length === signsdetails['required'].length && signs[address]['general'] === undefined && !isSigning" v-on:click="signContract('general')" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
+                        <div v-if="Object.keys(signs[address]['required']).length < signsdetails['required'].length">Firma tutte le clausole obbligatorie prima</div>
                         <div v-if="signs[address]['general'] !== undefined" style="color:green">Hai già firmato il contratto</div>
                     </div>
                   <hr>
@@ -275,6 +277,8 @@
         dropFiles_notify: [],
         dropFiles_verify: [],
         verified_attachments: [],
+        required_ids: [],
+        optional_ids: [],
         isArchived: false
       }
     },
@@ -310,14 +314,18 @@
           for(let y in contract.data.signs){
             if(contract.data.signs[y].required === true){
               app.signsdetails['required'].push(contract.data.signs[y])
+              app.required_ids.push(contract.data.signs[y].number)
             }else{
               app.signsdetails['optional'].push(contract.data.signs[y])
+              app.optional_ids.push(contract.data.signs[y].number)
             }
           }
           for(let j in contract.data.subjects){
             app.subjects.push(contract.data.subjects[j].address)
             if(app.signs[contract.data.subjects[j].address] === undefined){
               app.signs[contract.data.subjects[j].address] = {}
+              app.signs[contract.data.subjects[j].address]['required'] = []
+              app.signs[contract.data.subjects[j].address]['optional'] = []
             }
             app.identities[contract.data.subjects[j].address] = contract.data.subjects[j].address
             let checkinteractions = await app.scrypta.post('/read', { protocol: 'DC://', address: contract.data.subjects[j].address, history: true})
@@ -329,8 +337,14 @@
                 interaction.date = new Date(data.timestamp)
                 if(expsign.length === 2 && expsign[1] === contract.address){
                   app.signs[interaction.data.address]['general'] = interaction
+                  app.signs[interaction.data.address]['required'].push(interaction)
                 }else if(expsign.length === 3 && expsign[2] === contract.address){
                   app.signs[interaction.data.address][expsign[1]] = interaction
+                  if(app.required_ids.indexOf(expsign[1]) !== -1){
+                    app.signs[interaction.data.address]['required'].push(interaction)
+                  }else{
+                    app.signs[interaction.data.address]['optional'].push(interaction)
+                  }
                 }
               }
               if(interaction.refID === 'NOTIFY:' + app.$route.params.contract){
