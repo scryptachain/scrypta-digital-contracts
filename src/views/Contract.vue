@@ -6,6 +6,7 @@
         <h1 v-if="!contract.data.title">Dettagli Digital Contract</h1>
         <h1 v-if="contract.data.title">{{ contract.data.title }}</h1>
         {{ $route.params.contract }}
+        <a :href="'https://proof.scryptachain.org/#/uuid/' + contract.uuid" target="_blank" style="float:right"><b-icon icon="export" ></b-icon></a>
         <hr>
         <div v-if="isLoading === false">
           <b-tabs :animated="false" v-model="activeTab">
@@ -87,8 +88,17 @@
                 <span v-if="!isDecrypted">Soggetto #{{index}}</span>
                 <span v-if="key.identity.name !== undefined && key.identity.surname !== undefined"><strong>{{ key.identity.name }} {{ key.identity.surname }}</strong></span>
                 <span v-if="isDecrypted"></span><br>
-                N. Firme apposte: 0 / <span v-if="contract.data.signs !== undefined && contract.data.signs.length > 0">{{ contract.data.signs.length }}</span><span v-if="contract.data.signs === undefined || contract.data.signs.length === 0">1</span><br>
-                <span style="color:#f00">Il soggetto non ha firmato il contratto.</span>
+                N. Firme apposte: {{ Object.keys(signs[key.address]).length }} / {{ signsdetails['required'].length }}
+                <div v-if="Object.keys(signs[key.address]).length < signsdetails['required'].length" style="color:#f00">Il soggetto non ha firmato il contratto.</div>
+                <div v-if="Object.keys(signs[key.address]).length === signsdetails['required'].length" style="color:green">Il soggetto ha firmato il contratto.</div>
+                <div v-if="Object.keys(signs[key.address]).length > 0">
+                  <hr>
+                  <strong>Dettaglio firme</strong>
+                  <div v-for="(sign, index) in signs[key.address]" v-bind:key="sign._id" class="small-icons">
+                    <div v-if="index !== 'general'">Clausola #{{index}} <span v-if="sign.block > 0">firmata al blocco {{ sign.block }}</span><span v-if="!sign.block">in attesa di conferma</span> | {{ sign.date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + sign.uuid" target="_blank"><b-icon icon="export" ></b-icon></a></div>
+                    <div v-if="index === 'general'">Contratto <span v-if="sign.block > 0">firmato al blocco {{ sign.block }}</span><span v-if="!sign.block">in attesa di conferma</span> | {{ sign.date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + sign.uuid" target="_blank"><b-icon icon="export" ></b-icon></a></div>
+                  </div>
+                </div>
               </div>
             </b-tab-item>
 
@@ -98,7 +108,7 @@
                 <br>
                 <b-tabs v-model="activeNotification" :position="'is-left'" :animated="false" :type="'is-boxed'" vertical>
                   <b-tab-item v-for="(notification, index) in notifications" :label="'#' + (index + 1)" v-bind:key="notification.uuid">
-                    <h3 style="font-size:25px; padding:0 0 10px 0; margin-top:-20px; font-weight:bold">Notifica #{{activeNotification + 1}}</h3>
+                    <h3 style="font-size:25px; padding:0 0 10px 0; margin-top:-20px; font-weight:bold">Notifica #{{activeNotification + 1}} | <a :href="'https://proof.scryptachain.org/#/uuid/' + notification.uuid" target="_blank"><b-icon icon="export" ></b-icon></a></h3>
                     Scritta in blockchain da <strong>{{ identities[notification.address] }}</strong> e notarizzata al blocco <strong>{{ notification.block }}</strong><br>
                     Timestamp notifica: {{ notification.data.message.timestamp }}
                     <hr>
@@ -149,16 +159,17 @@
                     <div v-for="sign in contract.data.signs" v-bind:key="sign.number" style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                         <strong>Clausola #{{ sign.number }}</strong><br>
                         <strong>Obbligatoria:</strong> <span v-if="sign.required === true">SI</span><span v-if="sign.required === 'false'">NO</span>
-                        <b-button v-on:click="signContract(sign.number)" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
+                        <b-button v-if="signs[address][sign.number] === undefined && !isSigning" v-on:click="signContract(sign.number)" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
+                        <div v-if="signs[address][sign.number] !== undefined" style="color:green">Hai già firmato la clausola</div>
                     </div>
                   </div>
-
-                  <div class="columns" v-if="contract.data.signs.length === 0 || (signs[address] !== undefined && signs[address].length === contract.data.signs.length)">
-                    <div class="column">
-                      <b-button type="is-primary" v-if="!isSigning" v-on:click="signContract" size="is-large" style="width:100%!important">FIRMA GENERALE CONTRATTO</b-button>
-                      <span v-if="isSigning" style="padding:10px; text-align:center">Firmo il contratto...</span>
+                  <div style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+                        <strong>Firma generale contratto</strong><br>
+                        <strong>Obbligatoria:</strong> SI
+                        <b-button v-if="Object.keys(signs[address]).length === (signsdetails['required'].length - 1) && signs[address]['general'] === undefined && !isSigning" v-on:click="signContract('general')" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
+                        <div v-if="Object.keys(signs[address]).length < (signsdetails['required'].length - 1)">Firma tutte le clausole obbligatorie prima</div>
+                        <div v-if="signs[address]['general'] !== undefined" style="color:green">Hai già firmato il contratto</div>
                     </div>
-                  </div>
                   <hr>
                 </div>
                 <h1>Notifica informazioni alle parti</h1>
@@ -250,8 +261,11 @@
         subjects: [],
         identities: {},
         notifications: [],
-        signs: [],
-        signsdetails: {},
+        signs: {},
+        signsdetails: { 
+          required: ['GENERAL'],
+          optional: []
+        },
         dropFiles: [],
         files: [],
         verified: [],
@@ -292,15 +306,31 @@
         }
         if(contract.data.contract !== undefined){
           app.contract = contract
+          for(let y in contract.data.signs){
+            if(contract.data.signs[y].required === true){
+              app.signsdetails['required'].push(contract.data.signs[y])
+            }else{
+              app.signsdetails['optional'].push(contract.data.signs[y])
+            }
+          }
           for(let j in contract.data.subjects){
             app.subjects.push(contract.data.subjects[j].address)
+            if(app.signs[contract.data.subjects[j].address] === undefined){
+              app.signs[contract.data.subjects[j].address] = {}
+            }
             app.identities[contract.data.subjects[j].address] = contract.data.subjects[j].address
             let checkinteractions = await app.scrypta.post('/read', { protocol: 'DC://', address: contract.data.subjects[j].address, history: true})
             for(let jjj in checkinteractions.data){
               let interaction = checkinteractions.data[jjj]
-              if(interaction.refID === 'SIGN:' + app.$route.params.contract){
-                app.signs.push(interaction.address)
-                app.signsdetails[interaction.address] = interaction
+              if(interaction.refID.indexOf('SIGN:') !== -1){
+                let expsign = interaction.refID.split(':')
+                let data = JSON.parse(interaction.data.message)
+                interaction.date = new Date(data.timestamp)
+                if(expsign.length === 2 && expsign[1] === contract.address){
+                  app.signs[interaction.data.address]['general'] = interaction
+                }else if(expsign.length === 3 && expsign[2] === contract.address){
+                  app.signs[interaction.data.address][expsign[1]] = interaction
+                }
               }
               if(interaction.refID === 'NOTIFY:' + app.$route.params.contract){
                 let data = JSON.parse(interaction.data.message)
@@ -330,7 +360,7 @@
       async signContract(number){
         const app = this
         if(app.subjects.indexOf(app.address) !== -1){
-          if(app.signs.indexOf(app.address) === -1){
+          if(app.signs[app.address][number] === undefined){
             let balance = await app.scrypta.get('/balance/' + app.address)
             if(balance.balance > 0.0011){
               app.$buefy.dialog.prompt({
@@ -344,15 +374,20 @@
                   if (key !== false) {
                     app.isSigning = true
                     let sign = await app.writeSign(key, password, number)
-                    if(sign !== false){
-                      app.signs.push(app.address)
-                    }
                     app.isSigning = false
                     if(sign !== false){
-                      app.$buefy.toast.open({
-                        message: "Hai firmato correttamente il contratto!",
-                        type: "is-success"
-                      })
+                      app.signs[app.address][number] = 'PENDING'
+                      if(number === 'general'){
+                        app.$buefy.toast.open({
+                          message: "Hai firmato correttamente il contratto!",
+                          type: "is-success"
+                        })
+                      }else{
+                        app.$buefy.toast.open({
+                          message: "Hai firmato correttamente la clausola!",
+                          type: "is-success"
+                        })
+                      }
                       app.isSigning = false
                     }else{
                       app.$buefy.toast.open({
@@ -778,3 +813,9 @@
     },
   }
 </script>
+
+<style>
+  .small-icons .mdi-24px.mdi-set, .small-icons .mdi-24px.mdi:before{
+    font-size:12px
+  }
+</style>
