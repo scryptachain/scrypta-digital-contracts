@@ -64,18 +64,12 @@
                 <img src="/logo.png"><br>
                 <h1 class="title is-1">Scrypta Digital Contracts</h1>
                 <h2 class="subtitle">
-                  <br />Hai bisogno un'identità Scrypta per entrare in piattaforma.<br>Puoi entrare grazie al tuo .sid, se lo possiedi, oppure puoi creare una nuova identità ora.
+                  <br />Hai bisogno un'identità Scrypta per entrare in piattaforma.
                   <br />
-                  <br />Usa <a href="https://id.scryptachain.org/" target="_blank">Scrypta ID Extension</a> o <a v-on:click="showCreate">crea un nuovo wallet</a>.
+                  <br />Usa <a href="https://id.scryptachain.org/" target="_blank">Scrypta ID Extension</a>, <a v-on:click="showCreate">crea un nuovo wallet</a> <br><br><b>oppure</b><br><br>accedi con il pulsante sottostante.
                   <br />
                   <br />
-                  <b-upload v-model="file" v-on:input="loadWalletFromFile" drag-drop>
-                    <section class="section">
-                      <div class="content has-text-centered">
-                        <p>Rilascia il file .sid qui o clicca per caricare</p>
-                      </div>
-                    </section>
-                  </b-upload>
+                  <div id="scrypta-login" dapp="Digital Contracts"></div>
                 </h2>
               </div>
             </div>
