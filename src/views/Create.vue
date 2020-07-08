@@ -40,7 +40,7 @@
                 </span>
                 </h2>
               </div>
-              <div v-if="subjects.length > 0">
+              <div v-if="subjects.length > 0"><hr>
                 L'indirizzo di partecipazione è <a target="_blank" :href="url + '/#/join/' + contract_address">{{url}}/#/join/{{ contract_address }}</a>
               </div>
               <hr>

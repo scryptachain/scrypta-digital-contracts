@@ -91,25 +91,25 @@
                 <span v-if="isDecrypted"></span><br>
                 N. Firme in clausole obbligatorie: {{ Object.keys(signs[key.address]['required']).length }} / {{ signsdetails['required'].length }}<br>
                 N. Firme in clausole opzionali: {{ Object.keys(signs[key.address]['optional']).length }} / {{ signsdetails['optional'].length }}<br>
-                <div v-if="Object.keys(signs[key.address]['required']).length === signsdetails['required'].length" style="color:green">Il soggetto ha firmato il contratto.</div>
+                <div v-if="Object.keys(signs[key.address]['required']).length === signsdetails['required'].length && Object.keys(signs[key.address]['general']).length > 0" style="color:green">Il soggetto ha firmato il contratto.</div>
                 <div v-if="Object.keys(signs[key.address]['required']).length > 0 || Object.keys(signs[key.address]['optional']).length > 0 || Object.keys(signs[key.address]['general']).length > 0">
                   <hr>
                   <div v-if="contract.data.signs.length > 0">
                     <div v-for="sign in contract.data.signs" v-bind:key="sign.number"  class="small-icons">
                       <strong>Clausola {{ sign.number }}</strong>
-                      <span v-if="sign.required">
+                      <span v-if="sign.required === true || sign.required === 'true'">
                         (obbligatoria)<br>
-                        <span v-if="signs[address]['required'][sign.number] !== undefined" style="color:green"> <span v-if="signs[key.address]['required'][sign.number].block > 0">firma inserita al blocco {{ signs[key.address]['required'][sign.number].block }}</span><span v-if="!signs[key.address]['required'][sign.number].block">firma inserita ma in attesa di conferma</span><span v-if="signs[key.address]['required'][sign.number].uuid"> | {{ signs[key.address]['required'][sign.number].date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + signs[key.address]['required'][sign.number].uuid" target="_blank"><b-icon icon="export" ></b-icon></a></span></span>
+                        <span v-if="signs[address]['required'][sign.number] !== undefined" style="color:green"> <span v-if="signs[key.address]['required'][sign.number].block > 0">firma inserita al blocco {{ signs[key.address]['required'][sign.number].block }}</span><span v-if="!signs[key.address]['required'][sign.number].block">firma inserita ma in attesa di conferma</span><span v-if="signs[key.address]['required'][sign.number].uuid"> | {{ signs[key.address]['required'][sign.number].date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + signs[key.address]['required'][sign.number].uuid" target="_blank"><b-icon icon="export" ></b-icon></a></span></span> <span v-else>Non firmata</span>
                       </span>
-                      <span v-if="!sign.required">
+                      <span v-if="sign.required === false || sign.required === 'false'">
                         (opzionale)<br>
-                        <span v-if="signs[address]['optional'][sign.number] !== undefined" style="color:green"> <span v-if="signs[key.address]['optional'][sign.number].block > 0">firma inserita al blocco {{ signs[key.address]['optional'][sign.number].block }}</span><span v-if="!signs[key.address]['optional'][sign.number].block">firma inserita ma in attesa di conferma</span> <span v-if="signs[key.address]['optional'][sign.number].uuid">| {{ signs[key.address]['optional'][sign.number].date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + signs[key.address]['optional'][sign.number].uuid" target="_blank"><b-icon icon="export" ></b-icon></a></span></span>
+                        <span v-if="signs[address]['optional'][sign.number] !== undefined" style="color:green"> <span v-if="signs[key.address]['optional'][sign.number].block > 0">firma inserita al blocco {{ signs[key.address]['optional'][sign.number].block }}</span><span v-if="!signs[key.address]['optional'][sign.number].block">firma inserita ma in attesa di conferma</span> <span v-if="signs[key.address]['optional'][sign.number].uuid">| {{ signs[key.address]['optional'][sign.number].date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + signs[key.address]['optional'][sign.number].uuid" target="_blank"><b-icon icon="export" ></b-icon></a></span></span> <span v-else>Non firmata</span>
                       </span>
                     </div>
                   </div>
                   <div v-if="Object.keys(signs[key.address]['general']).length > 0" class="small-icons">
                     <strong>Firma generale contratto</strong><br><span v-if="signs[key.address]['general'].block > 0">firma inserita al blocco {{ signs[key.address]['general'].block }}</span><span v-if="!signs[key.address]['general'].block">firma inserita ma in attesa di conferma</span> <span v-if="signs[key.address]['general'].uuid">| {{ signs[key.address]['general'].date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + signs[key.address]['general'].uuid" target="_blank"><b-icon icon="export" ></b-icon></a></span>
-                  </div>
+                  </div> <div v-else><strong>Firma generale contratto</strong><br>Firma non presente.</div>
                 </div>
               </div>
             </b-tab-item>
@@ -358,7 +358,15 @@
                   signs[interaction.data.address]['general'] = interaction
                 }else if(expsign.length === 4 && expsign[3] === contract.address){
                   if(signs[interaction.data.address][expsign[1]][expsign[2]] === undefined){
-                    signs[interaction.data.address][expsign[1]][expsign[2]] = interaction
+                    if(expsign[1] === 'required'){
+                      if(app.required_ids.indexOf(expsign[2]) !== -1){
+                        signs[interaction.data.address][expsign[1]][expsign[2]] = interaction
+                      }
+                    }else if(expsign[2] === 'optional'){
+                      if(app.optional_ids.indexOf(expsign[2]) !== -1){
+                        signs[interaction.data.address][expsign[1]][expsign[2]] = interaction
+                      }
+                    }
                   }
                 }
               }
