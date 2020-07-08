@@ -213,32 +213,34 @@
                     </b-upload>
                 </b-field>
 
-                <div v-if="attachments_notify.length > 0">
-                  <div v-for="(file, index) in attachments_notify" v-bind:key="file.hash" style="border:1px solid #ccc; position:relative; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
-                      <v-gravatar :email="file.hash" style="float:left; height:55px; margin-right:10px;" />
-                      <strong>{{ file.filename }}</strong><br>
-                      <strong v-if="file.type">{{ file.type }} - </strong><strong>{{ file.size }} Byte</strong><br>
-                      <strong>Hash file:</strong> {{ file.hash }}
-                      <a v-on:click="deleteDropFile(index)">
-                        <b-icon
-                            style="position:absolute; top:30px; right:20px; cursor:pointer"
-                            icon="backspace">
-                        </b-icon>
-                      </a>
+                <div v-if="attachments_notify.length > 0 || app.plaintext_notify.length > 0">
+                  <div v-if="attachments_notify.length > 0">
+                    <div v-for="(file, index) in attachments_notify" v-bind:key="file.hash" style="border:1px solid #ccc; position:relative; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
+                        <v-gravatar :email="file.hash" style="float:left; height:55px; margin-right:10px;" />
+                        <strong>{{ file.filename }}</strong><br>
+                        <strong v-if="file.type">{{ file.type }} - </strong><strong>{{ file.size }} Byte</strong><br>
+                        <strong>Hash file:</strong> {{ file.hash }}
+                        <a v-on:click="deleteDropFile(index)">
+                          <b-icon
+                              style="position:absolute; top:30px; right:20px; cursor:pointer"
+                              icon="backspace">
+                          </b-icon>
+                        </a>
+                    </div>
+                    <br><br>
                   </div>
-                  <br><br>
-                <b-button v-if="!isNotifying" type="is-primary" v-on:click="notifyToContract" size="is-large" style="width:100%!important">NOTIFICA</b-button>
-                <div v-if="isNotifying" style="text-align:center; padding: 20px;">Notifica in corso, si prega di attendere...</div>
-              </div>
-              <div v-if="address === contract.data.creator">
-                <hr>
-                <h1>Archivia contratto</h1>
-                <span style="color:#f00"><b>Attenzione</b>, archiviando il contratto non lo vedrete tra quelli attivi, ma non potrete cancellare lo storico dalla blockchain in quanto il registro è immutabile. Le firme dei soggetti non vengono eliminate, quindi si prega di stare ben attenti se il contratto ha valenza legale.</span><br><br>
-                <b-button v-if="!isInvalidating" type="is-primary" v-on:click="invalidateContract" size="is-large" style="width:100%!important">ARCHIVIA ORA</b-button>
-                <div v-if="isInvalidating === true">
-                  Archivio il contratto si prega di attendere...
+                  <b-button v-if="!isNotifying" type="is-primary" v-on:click="notifyToContract" size="is-large" style="width:100%!important">NOTIFICA</b-button>
+                  <div v-if="isNotifying" style="text-align:center; padding: 20px;">Notifica in corso, si prega di attendere...</div>
                 </div>
-              </div>
+                <div v-if="address === contract.data.creator">
+                  <hr>
+                  <h1>Archivia contratto</h1>
+                  <span style="color:#f00"><b>Attenzione</b>, archiviando il contratto non lo vedrete tra quelli attivi, ma non potrete cancellare lo storico dalla blockchain in quanto il registro è immutabile. Le firme dei soggetti non vengono eliminate, quindi si prega di stare ben attenti se il contratto ha valenza legale.</span><br><br>
+                  <b-button v-if="!isInvalidating" type="is-primary" v-on:click="invalidateContract" size="is-large" style="width:100%!important">ARCHIVIA ORA</b-button>
+                  <div v-if="isInvalidating === true">
+                    Archivio il contratto si prega di attendere...
+                  </div>
+                </div>
             </b-tab-item>
           </b-tabs>
 
