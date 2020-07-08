@@ -170,12 +170,12 @@
                   <div v-if="contract.data.signs.length > 0">
                     <div v-for="sign in contract.data.signs" v-bind:key="sign.number" style="border:1px solid #ccc; text-align:left; position:relative; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                         <strong>Clausola #{{ sign.number }}</strong><br>
-                        <strong>Obbligatoria:</strong> <span v-if="sign.required === true">SI</span><span v-if="sign.required === 'false'">NO</span>
-                        <div v-if="sign.required">
+                        <strong>Obbligatoria:</strong> <span v-if="sign.required === true || sign.required === 'true'">SI</span><span v-if="sign.required === 'false' || sign.required === false">NO</span>
+                        <div v-if="sign.required === true || sign.required === 'true'">
                           <b-button v-if="signs[address]['required'][sign.number] === undefined && !isSigning" v-on:click="signContract(sign.number, 'required')" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
                           <div v-if="signs[address]['required'][sign.number] !== undefined" style="color:green">Hai già firmato la clausola</div>
                         </div>
-                        <div v-if="!sign.required">
+                        <div v-if="sign.required === false || sign.required === 'false'">
                           <b-button v-if="signs[address]['optional'][sign.number] === undefined && !isSigning" v-on:click="signContract(sign.number, 'optional')" type="is-primary" size="is-small" style="position:absolute; top:20px; right:20px;">FIRMA</b-button>
                           <div v-if="signs[address]['optional'][sign.number] !== undefined" style="color:green">Hai già firmato la clausola</div>
                         </div>
@@ -213,7 +213,7 @@
                     </b-upload>
                 </b-field>
 
-                <div v-if="attachments_notify.length > 0 || app.plaintext_notify.length > 0">
+                <div v-if="attachments_notify.length > 0 || plaintext_notify.length > 0">
                   <div v-if="attachments_notify.length > 0">
                     <div v-for="(file, index) in attachments_notify" v-bind:key="file.hash" style="border:1px solid #ccc; position:relative; text-align:left; color:#000; border-radius:5px; margin-top:20px; font-size:12px; padding:15px">
                         <v-gravatar :email="file.hash" style="float:left; height:55px; margin-right:10px;" />
@@ -330,7 +330,7 @@
           app.contract = contract
           let signs = {}
           for(let y in contract.data.signs){
-            if(contract.data.signs[y].required === true){
+            if(contract.data.signs[y].required === true || contract.data.signs[y].required === 'true'){
               app.signsdetails['required'].push(contract.data.signs[y])
               app.required_ids.push(contract.data.signs[y].number)
             }else{
@@ -362,7 +362,7 @@
                       if(app.required_ids.indexOf(expsign[2]) !== -1){
                         signs[interaction.data.address][expsign[1]][expsign[2]] = interaction
                       }
-                    }else if(expsign[2] === 'optional'){
+                    }else if(expsign[1] === 'optional'){
                       if(app.optional_ids.indexOf(expsign[2]) !== -1){
                         signs[interaction.data.address][expsign[1]][expsign[2]] = interaction
                       }
