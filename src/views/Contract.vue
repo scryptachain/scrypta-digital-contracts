@@ -107,7 +107,7 @@
                       </span>
                     </div>
                   </div>
-                  <div v-if="Object.keys(signs[key.address]['general']).length > 0" class="small-icons">
+                  <div v-if="Object.keys(signs[key.address]['general']).length > 0" style="color:green" class="small-icons">
                     <strong>Firma generale contratto</strong><br><span v-if="signs[key.address]['general'].block > 0">firma inserita al blocco {{ signs[key.address]['general'].block }}</span><span v-if="!signs[key.address]['general'].block">firma inserita ma in attesa di conferma</span> <span v-if="signs[key.address]['general'].uuid">| {{ signs[key.address]['general'].date }} | <a :href="'https://proof.scryptachain.org/#/uuid/' + signs[key.address]['general'].uuid" target="_blank"><b-icon icon="export" ></b-icon></a></span>
                   </div> <div v-else><strong>Firma generale contratto</strong><br>Firma non presente.</div>
                 </div>
