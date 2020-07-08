@@ -352,7 +352,7 @@
                 let expsign = interaction.refID.split(':')
                 let data = JSON.parse(interaction.data.message)
                 interaction.date = new Date(data.timestamp)
-                if(expsign.length === 3 && expsign[2] === contract.address){
+                if(expsign.length === 3 && expsign[1] === 'general' && expsign[2] === contract.address){
                   signs[interaction.data.address]['general'] = interaction
                 }else if(expsign.length === 4 && expsign[3] === contract.address){
                   if(signs[interaction.data.address][expsign[1]][expsign[2]] === undefined){
@@ -636,7 +636,7 @@
                 if(balance.balance >= 0.002){
                   app.isInvalidating = true
                   let contract = await app.scrypta.decryptData(app.contract.data.contract, key.prv)
-                  contract = JSON.parse(JSON.parse(contract))
+                  contract = JSON.parse(contract)
                   let fundresponse
                   let checkbalance = await app.scrypta.get('/balance/' + app.contract.address)
                   if(checkbalance.balance < 0.002){

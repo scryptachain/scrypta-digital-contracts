@@ -40,6 +40,9 @@
                 </span>
                 </h2>
               </div>
+              <div v-if="subjects.length > 0">
+                L'indirizzo di partecipazione è <a target="_blank" :href="url + '/#/join/' + contract_address">{{url}}/#/join/{{ contract_address }}</a>
+              </div>
               <hr>
               <b-button type="is-primary" style="float:right" v-on:click="showObject()">AVANTI</b-button>
             </b-tab-item>
